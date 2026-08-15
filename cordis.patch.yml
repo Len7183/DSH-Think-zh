@@ -1,6 +1,9 @@
 # dsh-think-zh bundle patch：向 profile 插入插件配置项。
 # 安装方式见 README.zh.md（dsh plugin --profile web add <本目录>）。
+# inject 声明 systemPrompt 服务依赖：cordis 会等待服务就绪后再 apply 插件，
+# 避免 section 注册在服务未就绪时被静默降级（注入失效）。
 - insert:
     - id: dsh-think-zh
       name: 'dsh-think-zh'
+      inject: [systemPrompt]
       config: {}

@@ -61,6 +61,7 @@ dsh --profile web --dump-config | grep dsh-think-zh
 
 | 环节 | 机制 |
 |---|---|
+| 加载依赖 | 插件声明 `inject: [systemPrompt]`：cordis 等待 `systemPrompt` 服务就绪后才执行 `apply`，避免 section 注册在服务未就绪时被静默降级（注入失效） |
 | 注入点 | `ctx.systemPrompt.section()` 注册 `dsh-think-zh/language`（order 2，persona 之后、工具声明之前） |
 | 生效时机 | 每次请求的 system prompt 组装 |
 | 运行时开销 | 零检测、零缓冲、零写回；token 成本仅为每次请求约 75 字指令文本 |

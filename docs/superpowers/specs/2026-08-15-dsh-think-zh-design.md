@@ -70,7 +70,26 @@ README.zh.md        # 安装/验证/工作原理/限制
   → LLM 依指令思考与回复（插件不监听、不检测、不干预）
 ```
 
-## 配置
+## v2.1 修复（2026-08-16）：inject 服务依赖
+
+**现象**：插件已安装（link、bundles、patch 均正确，`dump-config` 有条目），但实际发送的 system prompt 中始终没有 `dsh-think-zh/language` section；DSH 会话记录显示模型思考为英文。
+
+**诊断**（对照 dsh-liangshen 插件的 `export const inject = ['systemPrompt', 'tools']` 先例，读 cordis 源码确认）：
+
+- cordis 的 `inject` 机制：插件声明 `inject: ['systemPrompt']` 后，fiber 在服务实现就绪前保持 INACTIVE，**apply 不会被调用**（`_refresh` 中任一注入服务缺失即不激活）。
+- dsh-think-zh 未声明 `inject` → apply 在 bundle 启动早期执行，此时 `systemPrompt` 服务可能尚未注册 → `ctx.systemPrompt` 为 `undefined` → `registerLanguageInjection` 的 try/catch 将其捕获并 **warn 降级为不注入**（进程不崩溃，症状是"装了但没生效"）。
+
+**修复**（双保险）：
+
+- `src/index.ts` 导出 `inject = ['systemPrompt']`（模块级声明，cordis 标准路径）。
+- `cordis.patch.yml` 的 insert 增加 `inject: [systemPrompt]`（entry options 路径，loader 显式注入）。
+
+**验证**：
+
+- 模拟实验（真实 cordis + dsh-system-prompt）：插件先注册、服务延迟 150ms 注册时，apply 等待服务就绪后执行，`ctx.systemPrompt` 可用，section 注册成功并出现在 assemble 结果中。
+- 单元测试：`index.spec.ts` 断言 `inject === ['systemPrompt']`；全量 45 用例通过。
+
+
 
 | 键 | 默认值 | 说明 |
 |---|---|---|
