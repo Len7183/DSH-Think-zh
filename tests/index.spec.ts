@@ -8,7 +8,7 @@ describe('apply', () => {
   it('导出固定插件名', () => {
     expect(name).toBe('dsh-think-zh')
   })
-  it('默认配置：注入 + 校验均挂载', () => {
+  it('默认配置：注册注入 section', () => {
     const ctx = createMockContext()
     apply(ctx)
     expect(ctx.systemPrompt.section).toHaveBeenCalledWith({
@@ -16,17 +16,10 @@ describe('apply', () => {
       order: PROMPT_SECTION_ORDER,
       text: DEFAULT_INJECTION_TEXT,
     })
-    expect(ctx.handlers['session/event']).toHaveLength(1)
   })
   it('injectPrompt=false 时不注册 section', () => {
     const ctx = createMockContext()
     apply(ctx, { injectPrompt: false })
     expect(ctx.systemPrompt.section).not.toHaveBeenCalled()
-    expect(ctx.handlers['session/event']).toHaveLength(1)
-  })
-  it('verifyResponse=false 时不挂监听', () => {
-    const ctx = createMockContext()
-    apply(ctx, { verifyResponse: false })
-    expect(ctx.handlers['session/event']).toBeUndefined()
   })
 })

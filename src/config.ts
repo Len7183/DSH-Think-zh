@@ -7,38 +7,24 @@ export interface Config {
   injectPrompt: boolean
   /** 注入的指令文本；空白时回退到 DEFAULT_INJECTION_TEXT。 */
   injectionText: string
-  /** 是否开启响应语言校验。 */
-  verifyResponse: boolean
-  /** 有效文本中 CJK 占比阈值；低于此值判定为非中文。 */
-  cjkRatioThreshold: number
-  /** 检测到非中文时是否向会话追加一条中文提醒消息（默认只告警，不干扰对话）。 */
-  remindInSession: boolean
 }
 
+/** 精简强制指令：思考必用简体中文；回复默认简体中文（除非用户明确要求其他语言）；专业术语保留原文。 */
 export const DEFAULT_INJECTION_TEXT = `语言要求（强制）：
-- 你的回答（content）必须使用简体中文书写，除非用户明确要求使用其他语言。
-- 你的思考过程（reasoning/thinking）也必须使用简体中文。
-- 代码标识符、命令、文件名等专业术语保持原文，但注释、日志、提交信息与说明文字一律使用简体中文。`
+1. 思考（reasoning）必须使用简体中文。
+2. 回复默认使用简体中文，除非用户明确要求其他语言；代码、标识符、文件路径、命令等保持原文，不翻译。`
 
 export const DEFAULT_CONFIG: Config = {
   injectPrompt: true,
   injectionText: DEFAULT_INJECTION_TEXT,
-  verifyResponse: true,
-  cjkRatioThreshold: 0.5,
-  remindInSession: false,
 }
 
-/** 合并默认值并校验；非法阈值抛 TypeError，空白指令回退默认。 */
+/** 合并默认值并校验；空白/非字符串指令回退默认。 */
 export function resolveConfig(input?: Partial<Config>): Config {
   const merged: Config = { ...DEFAULT_CONFIG, ...input }
-  const { cjkRatioThreshold } = merged
-  if (typeof cjkRatioThreshold !== 'number'
-    || !Number.isFinite(cjkRatioThreshold)
-    || cjkRatioThreshold < 0
-    || cjkRatioThreshold > 1) {
-    throw new TypeError(`dsh-think-zh: cjkRatioThreshold 必须是 [0,1] 内的有限数，收到 ${String(cjkRatioThreshold)}`)
-  }
-  if (merged.injectionText.trim().length === 0) {
+  // injectionText 可能来自 YAML 配置（null/缺省）或非字符串，先做类型守卫再 trim
+  const injectionText: unknown = merged.injectionText
+  if (typeof injectionText !== 'string' || injectionText.trim().length === 0) {
     merged.injectionText = DEFAULT_INJECTION_TEXT
   }
   return merged

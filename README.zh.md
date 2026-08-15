@@ -1,13 +1,18 @@
 # dsh-think-zh
 
-强制 DeepSeek Harness（DSH）的回答与思考使用简体中文。
+强制 DeepSeek Harness（DSH）的思考与回答使用简体中文。
 
-通过两条机制逼近「强制」：
+通过**单一机制**生效：在每次请求的 system prompt 注入一条精简的强制语言指令（`dsh-think-zh/language` section）。插件不做任何检测、缓冲、告警或写回——**不污染上下文**，token 开销仅为每次请求约 75 字的指令文本。
 
-1. **注入**：在每次请求的 system prompt 注入中文语言指令（`dsh-think-zh/language` section）。
-2. **校验**：监听 `session/event`，对每个回合的思考（reasoning）与回答（text）分别统计 CJK 占比，低于阈值时告警（并可选择向会话追加中文提醒）。
+注入的指令内容（内置默认）：
 
-> **限制声明**：模型思考语言本质是模型自身行为，任何插件都无法 100% 程序化锁死。本插件通过「指令注入 + 事后检测告警」尽量逼近强制；语言检测为启发式（按字符占比），代码为主的响应可能误报。
+```
+语言要求（强制）：
+1. 思考（reasoning）必须使用简体中文。
+2. 回复默认使用简体中文，除非用户明确要求其他语言；代码、标识符、文件路径、命令等保持原文，不翻译。
+```
+
+> **限制声明**：模型思考语言本质是模型自身行为，插件只能通过「注入强制指令」影响，无法 100% 程序化锁死；是否遵守超出插件控制。
 
 ## 前置条件
 
@@ -36,8 +41,9 @@ dsh --profile web --dump-config | grep dsh-think-zh
 ```
 
 新建会话，分别用中文与英文提问，观察：
+
 - system prompt（轨迹视图）中出现「语言要求（强制）」section；
-- 英文回答/思考时日志出现 `疑似非中文` 告警，中文时无告警。
+- 中文提问时思考与回答均为简体中文。
 
 ## 配置
 
@@ -48,10 +54,7 @@ dsh --profile web --dump-config | grep dsh-think-zh
   name: 'dsh-think-zh'
   config:
     injectPrompt: true        # 是否注入中文指令
-    injectionText: ''         # 自定义指令文本；留空用内置默认
-    verifyResponse: true      # 是否开启响应语言校验
-    cjkRatioThreshold: 0.5    # CJK 占比阈值（0-1）
-    remindInSession: false    # 非中文时是否向会话追加中文提醒
+    injectionText: ''         # 自定义指令文本；留空用内置精简版
 ```
 
 ## 工作原理
@@ -59,8 +62,8 @@ dsh --profile web --dump-config | grep dsh-think-zh
 | 环节 | 机制 |
 |---|---|
 | 注入点 | `ctx.systemPrompt.section()` 注册 `dsh-think-zh/language`（order 2，persona 之后、工具声明之前） |
-| 校验点 | `ctx.on('session/event')` 缓冲 `assistant/chunk` 的 `reasoning-delta`/`text-delta`，`turn/end` 时判定 |
-| 语言检测 | 纯函数字符统计：汉字（扩展A/基本/兼容区）+ 中文标点 / 非空白字符 |
+| 生效时机 | 每次请求的 system prompt 组装 |
+| 运行时开销 | 零检测、零缓冲、零写回；token 成本仅为每次请求约 75 字指令文本 |
 
 ## 开发
 
