@@ -18,3 +18,9 @@ npm-debug.log*
 Thumbs.db
 .idea/
 .vscode/
+
+# Reasonix metadata
+.reasonix/
+
+# Git worktrees
+.worktrees/
