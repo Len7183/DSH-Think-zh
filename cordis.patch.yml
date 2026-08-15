@@ -1,0 +1,6 @@
+# dsh-think-zh bundle patch：向 profile 插入插件配置项。
+# 安装方式见 README.zh.md（dsh plugin --profile web add <本目录>）。
+- insert:
+    - id: dsh-think-zh
+      name: 'dsh-think-zh'
+      config: {}
