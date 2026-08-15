@@ -18,6 +18,9 @@ describe('resolveConfig', () => {
     expect(resolveConfig({ injectionText: null as unknown as string }).injectionText).toBe(DEFAULT_INJECTION_TEXT)
     expect(resolveConfig({ injectionText: 42 as unknown as string }).injectionText).toBe(DEFAULT_INJECTION_TEXT)
   })
+  it('自定义 injectionText 去除首尾空白', () => {
+    expect(resolveConfig({ injectionText: '  请用中文  ' }).injectionText).toBe('请用中文')
+  })
   it('默认指令同时约束思考、回复与保留原文', () => {
     expect(DEFAULT_INJECTION_TEXT).toContain('思考')
     expect(DEFAULT_INJECTION_TEXT).toContain('回复')
