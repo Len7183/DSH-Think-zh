@@ -1,8 +1,7 @@
 # Dependencies
 node_modules/
 
-# Build output
-lib/
+# Build output (lib/ 需提交：GitHub 安装方式依赖包内构建产物)
 dist/
 *.tsbuildinfo
 
