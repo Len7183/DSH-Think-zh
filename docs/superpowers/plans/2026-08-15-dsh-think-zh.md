@@ -37,7 +37,61 @@
   - `countRelevant(text: string): number` —— 非空白字符总数（含英文/数字/标点/CJK）
   - `cjkRatio(text: string): number | null` —— `countCjk / countRelevant`；`countRelevant === 0` 时返回 `null`（无法判定）
 
-- [ ] **Step 1: 写失败测试 `tests/language.spec.ts`**
+- [ ] **Step 1: 创建 `package.json`**
+
+```json
+{
+  "name": "dsh-think-zh",
+  "version": "0.1.0",
+  "description": "强制 DeepSeek Harness 的回答与思考使用简体中文",
+  "license": "MIT",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": { "types": "./lib/index.d.ts", "default": "./lib/index.js" },
+    "./package.json": "./package.json"
+  },
+  "files": ["lib", "cordis.patch.yml", "README.zh.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dsh": { "bundle": { "patch": "./cordis.patch.yml" } },
+  "engines": { "node": ">=22.19" },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
+```
+
+- [ ] **Step 2: 创建 `tsconfig.json`**
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "declaration": true,
+    "outDir": "lib",
+    "rootDir": "src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src"]
+}
+```
+
+（随后运行 `npm install` 安装 devDependencies。）
+
+- [ ] **Step 3: 写失败测试 `tests/language.spec.ts`**
 
 ```ts
 import { describe, expect, it } from 'vitest'
@@ -79,7 +133,7 @@ describe('cjkRatio', () => {
     expect(cjkRatio('你好世界')).toBe(1)
   })
   it('中英混合按占比计算', () => {
-    expect(cjkRatio('你好 world')).toBeCloseTo(2 / 3, 5)
+    expect(cjkRatio('你好 world')).toBeCloseTo(2 / 7, 5) // 你好world 共 7 个非空白字符，其中 2 个 CJK
   })
   it('纯英文为 0', () => {
     expect(cjkRatio('hello world')).toBe(0)
@@ -94,12 +148,12 @@ describe('cjkRatio', () => {
 })
 ```
 
-- [ ] **Step 2: 运行测试，确认失败**
+- [ ] **Step 4: 运行测试，确认失败**
 
 Run: `npx vitest run tests/language.spec.ts`
 Expected: FAIL —— `Cannot find module '../src/language.js'`（或 import 解析错误）
 
-- [ ] **Step 3: 创建 `src/language.ts`**
+- [ ] **Step 5: 创建 `src/language.ts`**
 
 ```ts
 /**
@@ -144,12 +198,12 @@ export function cjkRatio(text: string): number | null {
 }
 ```
 
-- [ ] **Step 4: 运行测试，确认通过**
+- [ ] **Step 6: 运行测试，确认通过**
 
 Run: `npx vitest run tests/language.spec.ts`
-Expected: PASS（11 个用例）
+Expected: PASS（13 个用例）
 
-- [ ] **Step 5: 提交**
+- [ ] **Step 7: 提交**
 
 ```bash
 git add package.json tsconfig.json src/language.ts tests/language.spec.ts
