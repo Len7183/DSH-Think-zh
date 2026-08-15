@@ -9,10 +9,10 @@ export interface Config {
   injectionText: string
 }
 
-/** 精简强制指令：思考必用简体中文；回复默认简体中文（除非用户明确要求其他语言）；专业术语保留原文。 */
+/** 精简强制指令：思考必用简体中文；回复跟随提问语言（无法判断时默认简体中文）；专业术语保留原文。 */
 export const DEFAULT_INJECTION_TEXT = `语言要求（强制）：
 1. 思考（reasoning）必须使用简体中文。
-2. 回复默认使用简体中文，除非用户明确要求其他语言；代码、标识符、文件路径、命令等保持原文，不翻译。`
+2. 回复使用与用户提问相同的语言；无法判断时默认简体中文。代码、标识符、文件路径、命令等保持原文，不翻译。`
 
 export const DEFAULT_CONFIG: Config = {
   injectPrompt: true,

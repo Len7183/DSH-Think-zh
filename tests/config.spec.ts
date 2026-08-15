@@ -24,5 +24,6 @@ describe('resolveConfig', () => {
     expect(DEFAULT_INJECTION_TEXT).toContain('简体中文')
     expect(DEFAULT_INJECTION_TEXT).toContain('保持原文')
     expect(DEFAULT_INJECTION_TEXT).toContain('必须')
+    expect(DEFAULT_INJECTION_TEXT).toContain('提问')
   })
 })
