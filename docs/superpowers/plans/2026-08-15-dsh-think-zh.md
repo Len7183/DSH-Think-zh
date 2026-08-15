@@ -787,7 +787,7 @@ Expected: `lib/index.js`、`lib/index.d.ts`、`lib/config.js`、`lib/injector.js
 - [ ] **Step 6: 全量测试**
 
 Run: `npx vitest run`
-Expected: PASS（29 个用例：11 + 5 + 3 + 6 + 4）
+Expected: PASS（33 个用例：13 + 5 + 3 + 8 + 4）
 
 - [ ] **Step 7: 提交**
 
