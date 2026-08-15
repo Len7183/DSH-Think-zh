@@ -2,7 +2,17 @@
   "name": "dsh-think-zh",
   "version": "0.1.0",
   "description": "强制 DeepSeek Harness 的回答与思考使用简体中文",
+  "keywords": ["deepseek", "deepseek-harness", "dsh", "plugin", "cordis", "chinese", "reasoning"],
   "license": "MIT",
+  "author": "Len7183 <Len7183@outlook.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Len7183/DSH-Think-zh.git"
+  },
+  "homepage": "https://github.com/Len7183/DSH-Think-zh#readme",
+  "bugs": {
+    "url": "https://github.com/Len7183/DSH-Think-zh/issues"
+  },
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

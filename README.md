@@ -1,6 +1,8 @@
 # dsh-think-zh
 
-一个由DeepSeek制作的DeepSeek Harness（DSH）插件：**强制模型的思考（reasoning）使用简体中文**，并让回复语言跟随提问语言。
+![license](https://img.shields.io/badge/license-MIT-blue)
+
+为 DeepSeek Harness（DSH）打造的插件：**强制模型的思考（reasoning）使用简体中文**，并让回复语言跟随提问语言。
 
 ## 项目解决什么问题
 
@@ -34,17 +36,31 @@ DeepSeek 模型默认的思考语言常常跟随提问语言——用英文提�
 - 已安装 DeepSeek Harness（`dsh --version` 可运行）。
 - Node.js ≥ 22.19，pnpm（`dsh plugin` 内部调用）。
 
+### 方式一：从 GitHub 直接安装（推荐）
+
+无需本地构建，任意目录执行（等价写法 `npx @deepseek-ai/dsh ...`）：
+
 ```bash
-# 1. 构建插件
+dsh plugin --profile web add github:Len7183/DSH-Think-zh
+```
+
+### 方式二：从源码构建安装
+
+```bash
+# 1. 克隆并构建插件
+git clone https://github.com/Len7183/DSH-Think-zh.git
+cd DSH-Think-zh
 npm install
 npm run build
 
-# 2. 安装到 web profile（任意目录执行；等价写法 npx @deepseek-ai/dsh ...）
+# 2. 安装到 web profile（任意目录执行）
 dsh plugin --profile web add <本插件目录的绝对路径>
 
 # 3. 重启 DSH
 dsh web
 ```
+
+> 必须用 `dsh plugin` 形式安装——直接 `npm install` 只会把包当普通库装到当前目录，不会注册进任何 DeepSeek Harness profile。
 
 ## 使用方法
 
@@ -111,4 +127,4 @@ npm run build   # tsc 构建到 lib/
 
 ## 许可
 
-MIT
+MIT © [Len7183](https://github.com/Len7183)

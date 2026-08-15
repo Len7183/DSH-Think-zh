@@ -1,6 +1,6 @@
 # dsh-think-zh
 
-强制 DeepSeek Harness（DSH）的思考与回答使用简体中文。
+为 DeepSeek Harness（DSH）打造的插件：**强制模型的思考（reasoning）使用简体中文**，并让回复语言跟随提问语言。
 
 通过**单一机制**生效：在每次请求的 system prompt 注入一条精简的强制语言指令（`dsh-think-zh/language` section）。插件不做任何检测、缓冲、告警或写回——**不污染上下文**，token 开销仅为每次请求约 75 字的指令文本。
 
@@ -21,6 +21,14 @@
 
 ## 安装
 
+### 从 GitHub 直接安装（推荐）
+
+```bash
+dsh plugin --profile web add github:Len7183/DSH-Think-zh
+```
+
+### 从源码构建安装
+
 ```bash
 # 1. 构建插件
 npm install
@@ -32,6 +40,8 @@ dsh plugin --profile web add <本插件目录的绝对路径>
 # 3. 重启 DSH
 dsh web
 ```
+
+> 必须用 `dsh plugin` 形式安装——直接 `npm install` 只会把包当普通库装到当前目录，不会注册进任何 DeepSeek Harness profile。
 
 ## 验证
 
@@ -75,4 +85,4 @@ npm run build   # tsc 构建到 lib/
 
 ## 许可
 
-MIT
+MIT © [Len7183](https://github.com/Len7183)
