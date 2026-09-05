@@ -19,9 +19,13 @@ export const DEFAULT_CONFIG: Config = {
   injectionText: DEFAULT_INJECTION_TEXT,
 }
 
-/** 合并默认值并校验；空白/非字符串指令回退默认，非默认字符串去除首尾空白。 */
+/** 合并默认值并校验；injectPrompt/injectionText 来自 YAML 时可能为 null 或非预期类型，均回退默认；非默认字符串去除首尾空白。 */
 export function resolveConfig(input?: Partial<Config>): Config {
   const merged: Config = { ...DEFAULT_CONFIG, ...input }
+  // 展开合并会以 null/undefined 覆盖默认值（YAML 空值场景），非布尔一律回退默认
+  if (typeof merged.injectPrompt !== 'boolean') {
+    merged.injectPrompt = DEFAULT_CONFIG.injectPrompt
+  }
   // injectionText 可能来自 YAML 配置（null/缺省）或非字符串，先做类型守卫再 trim
   const injectionText: unknown = merged.injectionText
   if (typeof injectionText === 'string' && injectionText.trim().length > 0) {

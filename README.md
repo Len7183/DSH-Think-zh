@@ -1,6 +1,6 @@
 # dsh-think-zh
 
-![license](https://img.shields.io/badge/license-MIT-blue)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![CI](https://github.com/Len7183/DSH-Think-zh/actions/workflows/ci.yml/badge.svg)](https://github.com/Len7183/DSH-Think-zh/actions/workflows/ci.yml)
 
 为 DeepSeek Harness（DSH）打造的插件：**强制模型的思考（reasoning）使用简体中文**，并让回复语言跟随提问语言。
 
@@ -42,6 +42,9 @@ DeepSeek Harness 默认的思考语言常常为英文，这不利于中文使用
 
 ```bash
 dsh plugin --profile web add github:Len7183/DSH-Think-zh
+
+# 可复现安装（固定到指定提交，避免上游变更引入意外）：
+dsh plugin --profile web add github:Len7183/DSH-Think-zh#<commit-sha>
 ```
 
 ### 方式二：从源码构建安装
@@ -114,9 +117,11 @@ def fibonacci(n): ...
 | 环节 | 机制 |
 |---|---|
 | 加载依赖 | 插件声明 `inject: [systemPrompt]`：cordis 等待 `systemPrompt` 服务就绪后才执行 `apply` |
-| 注入点 | `ctx.systemPrompt.section()` 注册 `dsh-think-zh/language`（order 2，persona 之后、工具声明之前） |
+| 注入点 | `ctx.systemPrompt.section()` 注册 `dsh-think-zh/language`（order 2，位于 persona 之后、一方工具指引 1000+ 之前的官方稀疏分配留白区） |
 | 生效时机 | 每次请求的 system prompt 组装 |
 | 运行时开销 | 零检测、零缓冲、零写回；token 成本仅为每次请求约 75 字指令文本 |
+
+兼容性说明：面向 `@deepseek-ai/dsh` 0.1.0-rc.6 及以上版本。`section()` 的注册在宿主侧是 cordis effect，随插件所在 context 卸载自动回收，插件无需手动管理 disposer。
 
 ## 开发
 

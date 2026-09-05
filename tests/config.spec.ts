@@ -10,6 +10,11 @@ describe('resolveConfig', () => {
     expect(resolved.injectPrompt).toBe(false)
     expect(resolved.injectionText).toBe(DEFAULT_INJECTION_TEXT)
   })
+  it('injectPrompt 为 null/undefined/非布尔时回退默认 true（YAML 空值场景）', () => {
+    expect(resolveConfig({ injectPrompt: null as unknown as boolean }).injectPrompt).toBe(true)
+    expect(resolveConfig({ injectPrompt: undefined }).injectPrompt).toBe(true)
+    expect(resolveConfig({ injectPrompt: 'false' as unknown as boolean }).injectPrompt).toBe(true)
+  })
   it('空白 injectionText 回退为默认指令', () => {
     expect(resolveConfig({ injectionText: '   ' }).injectionText).toBe(DEFAULT_INJECTION_TEXT)
   })

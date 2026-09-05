@@ -47,7 +47,7 @@ tests/              # vitest 单元测试
 README.zh.md        # 安装/验证/工作原理/限制
 ```
 
-**注入器**：调用 `ctx.systemPrompt.section()` 注册名为 `dsh-think-zh/language` 的固定 section，把中文语言指令注入每次请求的 system prompt。`order` 取 `2`（persona 为 `0`，其后、工具声明之前），不影响工具 schema 组装。注册失败记 warn 并降级为不注入，绝不抛出。
+**注入器**：调用 `ctx.systemPrompt.section()` 注册名为 `dsh-think-zh/language` 的固定 section，把中文语言指令注入每次请求的 system prompt。`order` 取 `2`（persona 为 `0`，其后、工具声明之前），不影响工具 schema 组装。注册失败记 error 并降级为不注入，绝不抛出。
 
 **默认注入文本**（精简版，覆盖 4 点需求，约 80 字）：
 
@@ -108,7 +108,7 @@ v2/v2.1 的注入文本要求「回复默认简体中文，除非用户明确要
 
 ## 错误处理
 
-- 注入器注册失败（如 section 名冲突）→ 记 `ctx.logger.warn` 并降级为不注入。
+- 注入器注册失败（如 section 名冲突）→ 记 `ctx.logger.error` 并降级为不注入。
 - 配置回退：`injectionText` 非字符串或空白时回退默认精简指令（类型守卫，不抛错）。
 
 ## 测试（vitest）
@@ -126,7 +126,7 @@ v2/v2.1 的注入文本要求「回复默认简体中文，除非用户明确要
 
 ## Git 仓库
 
-- 在 `I:\project\DSH-Think-zh\DSH-Think-zh` 维护（`main` 分支）。
+- 在本插件仓库维护（`main` 分支）。
 - `.gitignore`：`node_modules/`、`lib/` 等构建产物。
 - 提交策略：设计文档与实现分开提交；v2 重做吸收 v1 遗留的未提交修改（`config.ts` 类型守卫、`config.spec.ts` 对应用例——重写后自然并入）。
 
@@ -137,3 +137,10 @@ v2/v2.1 的注入文本要求「回复默认简体中文，除非用户明确要
 3. 插件源码中不存在校验器/语言检测相关代码与测试。
 4. `vitest` 全部用例通过。
 5. README.zh.md 提供安装、验证、token 开销与限制说明。
+
+## v0.2.0 优化（2026-09-05）
+
+- **修复**：`resolveConfig` 中 YAML 传来的 `injectPrompt: null`（或 undefined/非布尔值）经展开合并覆盖默认值，导致插件静默失效不注入；现非布尔一律回退默认 `true`（含回归测试）。
+- **工程化**：新增 GitHub Actions CI（typecheck + vitest + build，Node 22）；新增 CHANGELOG.md（Keep a Changelog）；`package.json` 声明 `sideEffects: false` 并升版至 0.2.0。
+- **文档**：order 注释与 README 对齐官方稀疏 section order 约定（persona 0、一方工具指引 1000+，第三方可用任意有限整数、同 order 平局按名称序；order 2 落在 persona 与 500 之间的留白区）；「错误处理」节 warn → error 对齐代码现状。
+- **勘误说明**：本文档早前「注册失败记 warn」与代码实现（记 error）不一致，已以上述勘误对齐；order 注释中「工具声明 100-199」为设计时的过期认知，现行约定见官方 sparse-first-party-prompt-section-orders 笔记。
