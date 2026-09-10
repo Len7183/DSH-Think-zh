@@ -9,8 +9,8 @@ export interface Config {
   injectionText: string
   /**
    * 是否在每轮请求的用户消息前额外注入语言指令（agent/pre-step 瀑布，高显著通道）。
-   * 默认 false：静态 section 对 reasoning 模型已足够；无 reasoning 模型（如 kimi
-   * k3-256k）对静态 section 服从弱、对话 steering 有效——此类场景可开 true。
+   * 默认 false：静态 section 对多数模型已足够；部分模型（实证 = kimi k3-256k，
+   * 默认 effort 档、思考已开）对静态 section 服从弱、对话 steering 有效——此类场景可开 true。
    */
   injectPerTurn: boolean
 }

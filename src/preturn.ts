@@ -1,9 +1,9 @@
 /**
  * dsh-think-zh per-turn 用户消息注入（高显著通道）。
  *
- * 动机（2026-09-10 实证，kimi k3-256k）：无 reasoning 模型对静态 system
- * prompt section 的服从弱——指令在场、persona 正确渲染，思考仍从第一步起
- * 用英文；而对话 steering（用户消息通道）可靠重新锚定。因此把同一指令
+ * 动机（2026-09-10 实证，kimi k3-256k）：部分模型对静态 system
+ * prompt section 的服从弱（实证 = kimi k3-256k，默认 effort 档、思考已开，
+ * 仍从第一步起用英文）；而对话 steering（用户消息通道）可靠重新锚定。因此把同一指令
  * 以用户消息形态每轮前置，作为可选加强（injectPerTurn: true）。
  *
  * 机制 = agent/pre-step 瀑布（prepend）——与宿主事件顺序约定一致：

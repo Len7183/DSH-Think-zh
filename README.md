@@ -90,8 +90,8 @@ dsh --profile web --dump-config | grep dsh-think-zh
 ```
 
 **`injectPerTurn`（每轮注入，可选）**：默认 `false`。静态 system prompt section
-对 reasoning 模型已足够；但**无 reasoning 模型**（如 kimi k3-256k）对静态
-section 的服从弱——指令在场、思考仍可能用英文（2026-09-10 实证）。此类场景
+对多数模型已足够；但**部分模型**（实证 = kimi k3-256k，默认 effort 档、思考已开）
+对静态 section 的服从弱——指令在场、思考仍用英文（2026-09-10 实证）。此类场景
 开启 `injectPerTurn: true` 后，插件会在每轮请求的第一条用户消息前以用户消息
 形态（对话 steering 同款高显著通道）前置同一指令，可靠重新锚定思考语言。
 注入带幂等标记 `[dsh-think-zh/preturn]`，多 pre-step 调用不会重复叠加。
