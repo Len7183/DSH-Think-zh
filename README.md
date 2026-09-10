@@ -84,9 +84,19 @@ dsh --profile web --dump-config | grep dsh-think-zh
 - id: dsh-think-zh
   name: 'dsh-think-zh'
   config:
-    injectPrompt: true        # 是否注入中文指令
+    injectPrompt: true        # 是否注入中文指令（system prompt section）
     injectionText: ''         # 自定义指令文本；留空用内置精简版
+    injectPerTurn: false      # 是否每轮在用户消息前额外注入（高显著通道，见下）
 ```
+
+**`injectPerTurn`（每轮注入，可选）**：默认 `false`。静态 system prompt section
+对 reasoning 模型已足够；但**无 reasoning 模型**（如 kimi k3-256k）对静态
+section 的服从弱——指令在场、思考仍可能用英文（2026-09-10 实证）。此类场景
+开启 `injectPerTurn: true` 后，插件会在每轮请求的第一条用户消息前以用户消息
+形态（对话 steering 同款高显著通道）前置同一指令，可靠重新锚定思考语言。
+注入带幂等标记 `[dsh-think-zh/preturn]`，多 pre-step 调用不会重复叠加。
+需要宿主提供 `agent/pre-step` 瀑布（0.1.2+ 均提供）；缺失时降级跳过并记
+error 日志，不影响静态注入。
 
 ## 输入输出示例
 

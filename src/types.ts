@@ -13,10 +13,32 @@ export interface PromptSectionLike {
   readonly text: string
 }
 
+/** agent/pre-step 瀑布（prepend）的最小结构声明——避免引入 dsh-agent 包（零 runtime 依赖）。 */
+export interface PreStepPayloadLike {
+  signal?: { aborted?: boolean }
+}
+
+/** pre-step 决策的最小结构声明。 */
+export interface PreStepDecisionLike {
+  kind?: string
+  messages?: Array<{
+    id?: string
+    role?: string
+    source?: { kind?: string }
+    content?: Array<{ type?: string; text?: string }>
+  }>
+}
+
 export interface MinimalContext {
   systemPrompt: {
     section(section: PromptSectionLike): () => void
   }
+  /** host 提供 agent/pre-step 瀑布时注册 per-turn 注入；缺失时降级跳过。 */
+  on?: (
+    event: 'agent/pre-step',
+    handler: (payload: PreStepPayloadLike, next: () => Promise<PreStepDecisionLike>) => Promise<PreStepDecisionLike>,
+    opts?: { prepend?: boolean },
+  ) => unknown
   logger: {
     warn(...args: unknown[]): void
     error(...args: unknown[]): void

@@ -1,5 +1,6 @@
 import { resolveConfig, type Config } from './config.js'
 import { registerLanguageInjection } from './injector.js'
+import { registerPerTurnNudge } from './preturn.js'
 import type { MinimalContext } from './types.js'
 
 export const name = 'dsh-think-zh'
@@ -10,9 +11,12 @@ export const name = 'dsh-think-zh'
  */
 export const inject: readonly string[] = ['systemPrompt']
 
-/** 插件入口：按配置挂载注入器（唯一机制：请求侧指令注入）。 */
+/** 插件入口：按配置挂载注入器（静态 section + 可选 per-turn 用户消息注入）。 */
 export function apply(ctx: MinimalContext, config?: Partial<Config>): void {
   const resolved = resolveConfig(config)
   if (!resolved.injectPrompt) return
   registerLanguageInjection(ctx, resolved.injectionText)
+  if (resolved.injectPerTurn) {
+    registerPerTurnNudge(ctx, resolved.injectionText)
+  }
 }
