@@ -7,6 +7,12 @@ export interface Config {
   injectPrompt: boolean
   /** 注入的指令文本；空白时回退到 DEFAULT_INJECTION_TEXT。 */
   injectionText: string
+  /**
+   * 是否在每轮请求的用户消息前额外注入语言指令（agent/pre-step 瀑布，高显著通道）。
+   * 默认 false：静态 section 对多数模型已足够；部分模型（实证 = kimi k3-256k，
+   * 默认 effort 档、思考已开）对静态 section 服从弱、对话 steering 有效——此类场景可开 true。
+   */
+  injectPerTurn: boolean
 }
 
 /** 精简强制指令：思考必用简体中文；回复跟随提问语言（无法判断时默认简体中文）；专业术语保留原文。 */
@@ -17,6 +23,7 @@ export const DEFAULT_INJECTION_TEXT = `语言要求（强制）：
 export const DEFAULT_CONFIG: Config = {
   injectPrompt: true,
   injectionText: DEFAULT_INJECTION_TEXT,
+  injectPerTurn: false,
 }
 
 /** 合并默认值并校验；injectPrompt/injectionText 来自 YAML 时可能为 null 或非预期类型，均回退默认；非默认字符串去除首尾空白。 */
@@ -25,6 +32,9 @@ export function resolveConfig(input?: Partial<Config>): Config {
   // 展开合并会以 null/undefined 覆盖默认值（YAML 空值场景），非布尔一律回退默认
   if (typeof merged.injectPrompt !== 'boolean') {
     merged.injectPrompt = DEFAULT_CONFIG.injectPrompt
+  }
+  if (typeof merged.injectPerTurn !== 'boolean') {
+    merged.injectPerTurn = DEFAULT_CONFIG.injectPerTurn
   }
   // injectionText 可能来自 YAML 配置（null/缺省）或非字符串，先做类型守卫再 trim
   const injectionText: unknown = merged.injectionText

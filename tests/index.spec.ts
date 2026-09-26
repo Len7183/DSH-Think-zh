@@ -25,4 +25,15 @@ describe('apply', () => {
     apply(ctx, { injectPrompt: false })
     expect(ctx.systemPrompt.section).not.toHaveBeenCalled()
   })
+  it('默认配置：不注册 per-turn 注入（静态 section 足够 reasoning 模型）', () => {
+    const ctx = createMockContext()
+    apply(ctx)
+    expect(ctx.on).not.toHaveBeenCalled()
+  })
+  it('injectPerTurn=true：注册 agent/pre-step 注入（prepend）', () => {
+    const ctx = createMockContext()
+    apply(ctx, { injectPerTurn: true })
+    expect(ctx.on).toHaveBeenCalledTimes(1)
+    expect(ctx.on).toHaveBeenCalledWith('agent/pre-step', expect.any(Function), { prepend: true })
+  })
 })

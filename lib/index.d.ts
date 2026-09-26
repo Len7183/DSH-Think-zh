@@ -6,5 +6,5 @@ export declare const name = "dsh-think-zh";
  * 缺少该声明时 cordis 可能在服务注册前执行 apply，导致 section 注册静默降级（无注入）。
  */
 export declare const inject: readonly string[];
-/** 插件入口：按配置挂载注入器（唯一机制：请求侧指令注入）。 */
+/** 插件入口：按配置挂载注入器（静态 section + 可选 per-turn 用户消息注入）。 */
 export declare function apply(ctx: MinimalContext, config?: Partial<Config>): void;

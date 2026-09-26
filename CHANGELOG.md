@@ -4,6 +4,15 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Added
+
+- `injectPerTurn` 配置：每轮请求在第一条用户消息前以用户消息形态前置语言指令
+  （`agent/pre-step` 瀑布，高显著通道），面向静态 section 服从弱的模型
+  （k3-256k 实证：默认 effort 档、思考已开仍英文；对话 steering 有效）；
+  默认 `false`，幂等标记防重复注入。
+
 ## [0.2.0] - 2026-09-05
 
 ### Fixed
