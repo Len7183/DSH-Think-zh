@@ -4,14 +4,36 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
-## [Unreleased]
+## [1.0.0] - 2026-09-27
 
 ### Added
 
-- `injectPerTurn` 配置：每轮请求在第一条用户消息前以用户消息形态前置语言指令
-  （`agent/pre-step` 瀑布，高显著通道），面向静态 section 服从弱的模型
-  （k3-256k 实证：默认 effort 档、思考已开仍英文；对话 steering 有效）；
-  默认 `false`，幂等标记防重复注入。
+- **「思考语言」设置项**：Web GUI 的「设置 → 通用」新增一行，样式与相邻的「语言」行一致
+  （同一套标记与 `--dsw-alias-*` token，自绘复刻，不依赖 `dsh-client-ui-primitives`）。
+  两档：
+  - `简体中文`（默认）：注入两条强制指令（思考用简体中文 + 回复跟随提问语言）；
+  - `默认英文`：只注入回复条款，思考语言交给模型自身默认。
+- **Client 半** `client.js`：零构建的 `window.__ModuleLoader__.load` bundle，经
+  `ctx.slots.inject('settings.general.item')` 注册行（order 5，位于「语言」0 与「外观」10 之间），
+  值经官方 settings 服务读写 profile 条目 config 的 `thinkingLanguage` 字段，文案走 locale 命名空间
+  `settings.thinking-language`。
+- **即时生效**：`thinkingLanguage` 声明为 schemastery `.volatile()` 字段，section 文本以提供者形态
+  注册，宿主每次组装现读 → 改完设置无需重启、不重挂插件。新增 `src/runtime.ts` 的 `readVolatile`
+  统一解引用（volatile 字段连默认值也是 `{ get() }` 引用）。
+- 导出宿主用的 `Config` schema（schemastery），profile patch 中的 config 由宿主按 schema 解析。
+
+### Changed
+
+- `resolveConfig` 入参放宽为 `RawConfigInput`（字段 unknown），内部统一解 volatile 引用后归一：
+  非布尔回退默认、`injectionText` 空白视作未自定义并按档位生成文本。
+- `registerLanguageInjection` / `registerPerTurnNudge` 改为接收文本提供者 `() => string`。
+- 包声明 `dsh.client`（platform web）与 `exports["./client"]`；新增可选 peerDependency
+  `@deepseek-ai/schemastery`（volatile 需 ≥3.18.3）；版本升至 1.0.0。
+- 文档按 1.0 重写；新增设计说明 `docs/superpowers/specs/2026-09-27-dsh-think-zh-v1.0-thinking-language.md`。
+
+### Note
+
+- 默认档仍是 `简体中文`，与 0.2.0 的注入文本逐字一致：升级后未动设置者行为不变。
 
 ## [0.2.0] - 2026-09-05
 

@@ -1,5 +1,9 @@
 # dsh-think-zh 实现计划
 
+> **已过期**：本计划描述的是 v1（含 `language.ts` 校验器 / `verifier.ts` 响应侧告警）。v2 重做已彻底移除校验器，
+> 1.0 又新增了「思考语言」设置项（见 `docs/superpowers/specs/2026-09-27-dsh-think-zh-v1.0-thinking-language.md`）。
+> 本文件仅作历史记录，勿据其实现。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 构建 DSH（DeepSeek Harness）插件 `dsh-think-zh`，通过 system prompt 注入 + 响应语言校验，强制 DeepSeek 的回答与思考使用简体中文。

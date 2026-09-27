@@ -1,9 +1,16 @@
-import { resolveConfig, type Config } from './config.js'
+import { resolveConfig, type RawConfigInput } from './config.js'
 import { registerLanguageInjection } from './injector.js'
 import { registerPerTurnNudge } from './preturn.js'
 import type { MinimalContext } from './types.js'
 
 export const name = 'dsh-think-zh'
+
+/**
+ * 宿主 Loader 只从包入口读取插件契约：`Config` 必须在这里导出，否则 profile patch
+ * 中的 config 不会按 schema 解析，`thinkingLanguage` 也不会成为 volatile 引用
+ * （设置页写入将无法即时生效）。
+ */
+export { Config } from './config.js'
 
 /**
  * 声明依赖：等待 host 的 systemPrompt 服务就绪后再 apply。
@@ -12,11 +19,13 @@ export const name = 'dsh-think-zh'
 export const inject: readonly string[] = ['systemPrompt']
 
 /** 插件入口：按配置挂载注入器（静态 section + 可选 per-turn 用户消息注入）。 */
-export function apply(ctx: MinimalContext, config?: Partial<Config>): void {
+export function apply(ctx: MinimalContext, config?: RawConfigInput): void {
   const resolved = resolveConfig(config)
   if (!resolved.injectPrompt) return
-  registerLanguageInjection(ctx, resolved.injectionText)
+  // 每次现读：thinkingLanguage 是 volatile 字段，设置页改完的下一份请求即生效。
+  const currentText = (): string => resolveConfig(config).injectionText
+  registerLanguageInjection(ctx, currentText)
   if (resolved.injectPerTurn) {
-    registerPerTurnNudge(ctx, resolved.injectionText)
+    registerPerTurnNudge(ctx, currentText)
   }
 }

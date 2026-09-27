@@ -16,13 +16,18 @@ const SECTION_SPEC: Omit<PromptSectionLike, 'text'> = {
 /**
  * 向 host 的 systemPrompt 服务注册中文指令 section。
  *
+ * `text` 以提供者形态注册：宿主在每次组装时调用它（`section.text(context)`），
+ * 因此 volatile 配置改完的下一份请求即生效，无需重挂插件或重注册 section。
+ *
  * 失败时绝不抛出，但会以 error 级别记录明确诊断：
  * - systemPrompt 服务缺失（多为宿主未加载该服务或插件缺 `inject` 声明）；
  * - section 注册抛错（如名称冲突）。
  * 两路失败都返回空函数 disposer，调用方无需区分。
+ * @param ctx - 宿主上下文。
+ * @param text - 每次组装现读的指令文本提供者。
  * @returns 注册的 disposer（失败时为空函数）。
  */
-export function registerLanguageInjection(ctx: MinimalContext, text: string): () => void {
+export function registerLanguageInjection(ctx: MinimalContext, text: () => string): () => void {
   if (typeof ctx.systemPrompt?.section !== 'function') {
     ctx.logger.error(
       `dsh-think-zh: systemPrompt 服务不可用，语言指令未注入。请确认插件声明了 inject: ["systemPrompt"] 且宿主已注册该服务。`,

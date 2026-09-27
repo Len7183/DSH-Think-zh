@@ -8,6 +8,7 @@
  *
  * 机制 = agent/pre-step 瀑布（prepend）——与宿主事件顺序约定一致：
  * prepend 注册者先于后续处理者看到决策，注入发生在消息进入模型前。
+ * 文本由提供者现读，因此设置页改完的下一轮即生效。
  * 失败不抛出：与 injector.ts 同款降级（error 日志，静默跳过）。
  */
 import type { MinimalContext, PreStepDecisionLike } from './types.js'
@@ -17,9 +18,11 @@ export const PRETURN_MARK = 'dsh-think-zh/preturn'
 /**
  * 注册 per-turn 语言注入：把指令文本前置到每轮第一条用户消息文本块。
  * 幂等标记（PRETURN_MARK）防止多 pre-step 调用重复注入。
+ * @param ctx - 宿主上下文。
+ * @param text - 每轮现读的指令文本提供者。
  * @returns 无（ctx.on 的返回值与上游 cordis 语义无关，调用方忽略）。
  */
-export function registerPerTurnNudge(ctx: MinimalContext, text: string): void {
+export function registerPerTurnNudge(ctx: MinimalContext, text: () => string): void {
   if (typeof ctx.on !== 'function') {
     ctx.logger.error('dsh-think-zh: agent/pre-step 瀑布不可用，per-turn 语言指令未注册。宿主可能不提供该瀑布。')
     return
@@ -44,7 +47,7 @@ export function registerPerTurnNudge(ctx: MinimalContext, text: string): void {
             return block
           }
           done = true
-          return { ...block, text: `[${PRETURN_MARK}] ${text}\n\n${block.text}` }
+          return { ...block, text: `[${PRETURN_MARK}] ${text()}\n\n${block.text}` }
         })
         if (!done) {
           return msg
