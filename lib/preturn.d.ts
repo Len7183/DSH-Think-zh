@@ -14,8 +14,11 @@
 import type { MinimalContext } from './types.js';
 export declare const PRETURN_MARK = "dsh-think-zh/preturn";
 /**
- * 注册 per-turn 语言注入：把指令文本前置到每轮第一条用户消息文本块。
- * 幂等标记（PRETURN_MARK）防止多 pre-step 调用重复注入。
+ * 注册 per-turn 语言注入：把指令文本前置到每轮第一条用户消息的首个文本块。
+ *
+ * 只考虑数组中第一条 user 来源消息，绝不向后顺延：该消息任一文本块已含幂等标记
+ * （PRETURN_MARK）时整条决策原样返回。此前按「首个未标记文本块」顺延的实现会让
+ * 多 pre-step 调用把标记扩散到同消息后续文本块乃至后续用户消息，幂等守卫形同虚设。
  * @param ctx - 宿主上下文。
  * @param text - 每轮现读的指令文本提供者。
  * @returns 无（ctx.on 的返回值与上游 cordis 语义无关，调用方忽略）。

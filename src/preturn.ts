@@ -16,8 +16,11 @@ import type { MinimalContext, PreStepDecisionLike } from './types.js'
 export const PRETURN_MARK = 'dsh-think-zh/preturn'
 
 /**
- * 注册 per-turn 语言注入：把指令文本前置到每轮第一条用户消息文本块。
- * 幂等标记（PRETURN_MARK）防止多 pre-step 调用重复注入。
+ * 注册 per-turn 语言注入：把指令文本前置到每轮第一条用户消息的首个文本块。
+ *
+ * 只考虑数组中第一条 user 来源消息，绝不向后顺延：该消息任一文本块已含幂等标记
+ * （PRETURN_MARK）时整条决策原样返回。此前按「首个未标记文本块」顺延的实现会让
+ * 多 pre-step 调用把标记扩散到同消息后续文本块乃至后续用户消息，幂等守卫形同虚设。
  * @param ctx - 宿主上下文。
  * @param text - 每轮现读的指令文本提供者。
  * @returns 无（ctx.on 的返回值与上游 cordis 语义无关，调用方忽略）。
@@ -29,6 +32,8 @@ export function registerPerTurnNudge(ctx: MinimalContext, text: () => string): v
   }
   try {
     ctx.on('agent/pre-step', async (payload, next): Promise<PreStepDecisionLike> => {
+      // 瀑布契约要求处理器调用 next() 传递决策，不得短路；aborted 只跳过指令改写，
+      // 链路行为（含中止语义）交由宿主自查。
       const decision = await next()
       if (!decision || decision.kind !== 'enter' || !Array.isArray(decision.messages) || decision.messages.length === 0) {
         return decision
@@ -36,26 +41,33 @@ export function registerPerTurnNudge(ctx: MinimalContext, text: () => string): v
       if (payload?.signal?.aborted) {
         return decision
       }
-      let injected = false
-      const messages = decision.messages.map((msg) => {
-        if (injected || !msg || msg.source?.kind !== 'user' || !Array.isArray(msg.content)) {
-          return msg
-        }
-        let done = false
-        const content = msg.content.map((block) => {
-          if (done || !block || block.type !== 'text' || typeof block.text !== 'string' || block.text.includes(PRETURN_MARK)) {
-            return block
-          }
-          done = true
+      const index = decision.messages.findIndex((msg) => !!msg && msg.source?.kind === 'user')
+      if (index === -1) {
+        return decision
+      }
+      const msg = decision.messages[index]
+      if (!msg || !Array.isArray(msg.content)) {
+        return decision
+      }
+      const isText = (block: { type?: string; text?: string } | undefined): block is { type: 'text'; text: string } =>
+        !!block && block.type === 'text' && typeof block.text === 'string'
+      // 幂等判定按整条消息：任一文本块已带标记即视为已注入。
+      if (msg.content.some((block) => isText(block) && block.text.includes(PRETURN_MARK))) {
+        return decision
+      }
+      const blockIndex = msg.content.findIndex(isText)
+      if (blockIndex === -1) {
+        return decision
+      }
+      const messages = decision.messages.slice()
+      messages[index] = {
+        ...msg,
+        content: msg.content.map((block, i) => {
+          if (i !== blockIndex || !isText(block)) return block
           return { ...block, text: `[${PRETURN_MARK}] ${text()}\n\n${block.text}` }
-        })
-        if (!done) {
-          return msg
-        }
-        injected = true
-        return { ...msg, content }
-      })
-      return injected ? { ...decision, messages } : decision
+        }),
+      }
+      return { ...decision, messages }
     }, { prepend: true })
   } catch (error: unknown) {
     ctx.logger.error(`dsh-think-zh: 注册 agent/pre-step 失败: ${String(error)}`)
