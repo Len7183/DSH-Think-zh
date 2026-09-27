@@ -74,13 +74,15 @@ describe('thinkingLanguage', () => {
     expect(resolveConfig({ thinkingLanguage: 'en', injectionText: '   ' }).injectionText).toBe(EN_TEXT)
     expect(resolveConfig({ thinkingLanguage: 'zh' }).injectionText).toBe(ZH_TEXT)
   })
-  it('normalizeThinkingLanguage：白名单外一律回退默认', () => {
+  it('normalizeThinkingLanguage：大小写与首尾空白不敏感，白名单外一律回退默认', () => {
     expect(normalizeThinkingLanguage('zh')).toBe('zh')
     expect(normalizeThinkingLanguage('en')).toBe('en')
+    expect(normalizeThinkingLanguage('EN')).toBe('en')
+    expect(normalizeThinkingLanguage(' en ')).toBe('en')
     expect(normalizeThinkingLanguage(null)).toBe('zh')
     expect(normalizeThinkingLanguage(undefined)).toBe('zh')
-    expect(normalizeThinkingLanguage('EN')).toBe('zh')
     expect(normalizeThinkingLanguage('auto')).toBe('zh')
+    expect(normalizeThinkingLanguage('AUTO')).toBe('zh')
     expect(normalizeThinkingLanguage(42)).toBe('zh')
     expect(normalizeThinkingLanguage({ get: () => 'en' })).toBe('zh')
   })

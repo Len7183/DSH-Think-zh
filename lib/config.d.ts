@@ -50,7 +50,10 @@ export interface RawConfigInput {
     injectPerTurn?: unknown;
     thinkingLanguage?: unknown;
 }
-/** 白名单归一：非 `'zh' | 'en'` 一律回退默认档（YAML null／错拼不抛错）。 */
+/**
+ * 白名单归一：大小写与首尾空白不敏感（手写 YAML 的 `EN` 按用户意图归为 `en`）；
+ * 白名单外一律回退默认档（YAML null／错拼不抛错）。
+ */
 export declare function normalizeThinkingLanguage(value: unknown): ThinkingLanguage;
 /**
  * 合并默认值并校验：非布尔回退默认；`injectionText` 空白视作未自定义，
