@@ -60,4 +60,11 @@ describe('apply', () => {
     expect(ctx.on).toHaveBeenCalledTimes(1)
     expect(ctx.on).toHaveBeenCalledWith('agent/pre-step', expect.any(Function), { prepend: true })
   })
+  it('injectPerTurn 与 injectPrompt 相互独立：injectPrompt=false 仍可单独启用 per-turn', () => {
+    const ctx = createMockContext()
+    apply(ctx, { injectPrompt: false, injectPerTurn: true })
+    expect(ctx.systemPrompt.section).not.toHaveBeenCalled()
+    expect(ctx.on).toHaveBeenCalledTimes(1)
+    expect(ctx.on).toHaveBeenCalledWith('agent/pre-step', expect.any(Function), { prepend: true })
+  })
 })
