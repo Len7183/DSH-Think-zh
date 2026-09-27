@@ -1,8 +1,17 @@
 {
   "name": "dsh-think-zh",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "强制 DeepSeek Harness 的思考使用简体中文，并可在「设置 → 通用」切换",
-  "keywords": ["deepseek", "deepseek-harness", "dsh", "plugin", "cordis", "chinese", "reasoning", "settings"],
+  "keywords": [
+    "deepseek",
+    "deepseek-harness",
+    "dsh",
+    "plugin",
+    "cordis",
+    "chinese",
+    "reasoning",
+    "settings"
+  ],
   "license": "MIT",
   "author": "Len7183 <Len7183@outlook.com>",
   "repository": {
@@ -18,11 +27,20 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "exports": {
-    ".": { "types": "./lib/index.d.ts", "default": "./lib/index.js" },
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
     "./client": "./client.js",
     "./package.json": "./package.json"
   },
-  "files": ["lib", "client.js", "cordis.patch.yml", "README.md", "CHANGELOG.md"],
+  "files": [
+    "lib",
+    "client.js",
+    "cordis.patch.yml",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "prepare": "npm run build",
@@ -30,7 +48,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dsh": {
-    "bundle": { "patch": "./cordis.patch.yml" },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
     "client": {
       "platform": "web",
       "inject": [
@@ -40,12 +60,16 @@
       ]
     }
   },
-  "engines": { "node": ">=22.19" },
+  "engines": {
+    "node": ">=22.19"
+  },
   "peerDependencies": {
     "@deepseek-ai/schemastery": ">=3.18.3"
   },
   "peerDependenciesMeta": {
-    "@deepseek-ai/schemastery": { "optional": true }
+    "@deepseek-ai/schemastery": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@deepseek-ai/schemastery": "^3.18.4",

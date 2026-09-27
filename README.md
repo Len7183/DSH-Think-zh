@@ -96,8 +96,8 @@ dsh --profile <你的 profile 名> --dump-config | grep dsh-think-zh
   config:
     injectPrompt: true          # 是否注入中文指令（system prompt section）
     injectionText: ''           # 自定义指令文本；非空时整段生效，思考语言档位被忽略
-    injectPerTurn: false        # 是否每轮在用户消息前额外注入（高显著通道，见下）
-    thinkingLanguage: zh        # 设置页写入的档位（zh | en），一般无需手改
+    injectPerTurn: false        # 是否每轮在用户消息前额外注入（高显著通道，见下）；与 injectPrompt 相互独立
+    thinkingLanguage: zh        # 设置页写入的档位（zh | en，大小写/首尾空白不敏感），一般无需手改
 ```
 
 **`injectPerTurn`（每轮注入，可选）**：默认 `false`。静态 system prompt section
@@ -107,7 +107,8 @@ dsh --profile <你的 profile 名> --dump-config | grep dsh-think-zh
 形态（对话 steering 同款高显著通道）前置同一指令（文本同样跟随「思考语言」档位）。
 注入带幂等标记 `[dsh-think-zh/preturn]`，多 pre-step 调用不会重复叠加。
 需要宿主提供 `agent/pre-step` 瀑布（0.1.2+ 均提供）；缺失时降级跳过并记
-error 日志，不影响静态注入。
+error 日志，不影响静态注入。两通道相互独立：`injectPrompt: false` 时可仅以
+per-turn 通道投递指令。
 
 ## 输入输出示例
 
