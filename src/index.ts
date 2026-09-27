@@ -21,10 +21,12 @@ export const inject: readonly string[] = ['systemPrompt']
 /** 插件入口：按配置挂载注入器（静态 section + 可选 per-turn 用户消息注入）。 */
 export function apply(ctx: MinimalContext, config?: RawConfigInput): void {
   const resolved = resolveConfig(config)
-  if (!resolved.injectPrompt) return
   // 每次现读：thinkingLanguage 是 volatile 字段，设置页改完的下一份请求即生效。
   const currentText = (): string => resolveConfig(config).injectionText
-  registerLanguageInjection(ctx, currentText)
+  // 两个通道相互独立：静态注入关掉时，per-turn 仍可单独承担指令投递。
+  if (resolved.injectPrompt) {
+    registerLanguageInjection(ctx, currentText)
+  }
   if (resolved.injectPerTurn) {
     registerPerTurnNudge(ctx, currentText)
   }
