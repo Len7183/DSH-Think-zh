@@ -4,6 +4,32 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [1.1.0] - 2026-09-28
+
+### Fixed
+
+- **per-turn 注入幂等守卫漏过**：第一条用户消息已带 `[dsh-think-zh/preturn]` 标记时，旧逻辑按
+  「首个未标记文本块」继续向后扫描，把指令再注入同消息的后续文本块（多文本块场景），多轮历史下
+  更会逐轮污染后续用户消息。现只考虑数组中第一条用户消息：整条已含标记则原样返回，未含才注入
+  其首个文本块，绝不向后顺延；新增三例回归测试。
+- **设置行假「保存失败」**：`form.set` 返回值非 `true` 一律判失败；现回读快照确认，确实未落盘才
+  提示重试，宿主成功时返回非字面 `true` 不再误报。
+- 「思考语言」下拉菜单打开期间随窗口缩放与设置内容栏滚动（capture 捕获任意滚动容器）重算位置，
+  fixed 定位不再与触发器脱开；打开即把焦点移入当前选中项，方向键遍历立即可用（未定位首帧改用
+  opacity 隐藏，`visibility:hidden` 元素不可聚焦）。
+
+### Changed
+
+- `injectPerTurn` 与 `injectPrompt` 解耦为独立开关：`injectPrompt: false` 不再连带关闭 per-turn 注入，
+  可单独以高显著通道投递指令。
+- 档位归一化大小写与首尾空白不敏感：手写 YAML 的 `thinkingLanguage: EN` 现按 `en` 生效
+  （此前被白名单拒绝而静默回退 `zh`）；client 侧 `pickId` 采用同一规则，两侧取值不分叉。
+
+### Note
+
+- `agent/pre-step` 处理器始终调用 `next()` 维持瀑布契约（处理器不得短路）；`aborted` 只跳过指令改写，
+  链路行为交由宿主自查。
+
 ## [1.0.0] - 2026-09-27
 
 ### Added
