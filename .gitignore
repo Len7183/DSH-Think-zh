@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output (lib/ 需提交：GitHub 安装方式依赖包内构建产物)
+dist/
+*.tsbuildinfo
+
+# Test / coverage
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Reasonix metadata
+.reasonix/
+
+# Git worktrees
+.worktrees/

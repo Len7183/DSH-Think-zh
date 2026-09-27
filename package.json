@@ -1,0 +1,56 @@
+{
+  "name": "dsh-think-zh",
+  "version": "1.0.0",
+  "description": "强制 DeepSeek Harness 的思考使用简体中文，并可在「设置 → 通用」切换",
+  "keywords": ["deepseek", "deepseek-harness", "dsh", "plugin", "cordis", "chinese", "reasoning", "settings"],
+  "license": "MIT",
+  "author": "Len7183 <Len7183@outlook.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Len7183/DSH-Think-zh.git"
+  },
+  "homepage": "https://github.com/Len7183/DSH-Think-zh#readme",
+  "bugs": {
+    "url": "https://github.com/Len7183/DSH-Think-zh/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": { "types": "./lib/index.d.ts", "default": "./lib/index.js" },
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "files": ["lib", "client.js", "cordis.patch.yml", "README.md", "CHANGELOG.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-settings-general",
+        "@deepseek-ai/dsh-client-locale"
+      ]
+    }
+  },
+  "engines": { "node": ">=22.19" },
+  "peerDependencies": {
+    "@deepseek-ai/schemastery": ">=3.18.3"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/schemastery": { "optional": true }
+  },
+  "devDependencies": {
+    "@deepseek-ai/schemastery": "^3.18.4",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
