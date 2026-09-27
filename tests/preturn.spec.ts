@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { PRETURN_MARK, registerPerTurnNudge } from '../src/preturn.js'
 import { DEFAULT_INJECTION_TEXT, injectionTextFor } from '../src/config.js'
 import type { PreStepDecisionLike } from '../src/types.js'
@@ -22,7 +22,7 @@ function userDecision(text: string): PreStepDecisionLike {
 }
 
 describe('registerPerTurnNudge', () => {
-  it('ctx.on 缺失时降级：error 日志、不抛错', () => {
+  it('ctx.on 缺失时降级：error 日志、不抛错', async () => {
     const ctx = createMockContext()
     delete (ctx as { on?: unknown }).on
     expect(() => registerPerTurnNudge(ctx, () => TEXT)).not.toThrow()
@@ -71,13 +71,67 @@ describe('registerPerTurnNudge', () => {
     expect(b2?.text).toBe('c')
   })
 
-  it('handler：幂等——已带标记的消息不再注入', async () => {
+  it('handler：幂等——首条用户消息已带标记时整条决策原样返回', async () => {
     const ctx = createMockContext()
     registerPerTurnNudge(ctx, () => TEXT)
     const handler = captureHandler(ctx)
-    const once = `[${PRETURN_MARK}] ${TEXT}\n\n你好`
-    const out = await handler({}, async () => userDecision(once))
-    expect(out.messages?.[0]?.content?.[0]?.text).toBe(once)
+    const decision = userDecision(`[${PRETURN_MARK}] ${TEXT}\n\n你好`)
+    const out = await handler({}, async () => decision)
+    expect(out).toBe(decision)
+  })
+
+  it('handler：幂等——首块已带标记时不再注入同消息的后续文本块（回归：标记扩散）', async () => {
+    const ctx = createMockContext()
+    registerPerTurnNudge(ctx, () => TEXT)
+    const handler = captureHandler(ctx)
+    const decision: PreStepDecisionLike = {
+      kind: 'enter',
+      messages: [
+        {
+          id: 'm1',
+          role: 'user',
+          source: { kind: 'user' },
+          content: [
+            { type: 'text', text: `[${PRETURN_MARK}] ${TEXT}\n\n你好` },
+            { type: 'text', text: 'world' },
+          ],
+        },
+      ],
+    }
+    const out = await handler({}, async () => decision)
+    expect(out).toBe(decision)
+    expect(out.messages?.[0]?.content?.[1]?.text).toBe('world')
+  })
+
+  it('handler：幂等——首条用户消息已带标记时不顺延到后续用户消息（回归：历史污染）', async () => {
+    const ctx = createMockContext()
+    registerPerTurnNudge(ctx, () => TEXT)
+    const handler = captureHandler(ctx)
+    const decision: PreStepDecisionLike = {
+      kind: 'enter',
+      messages: [
+        { id: 'm1', role: 'user', source: { kind: 'user' }, content: [{ type: 'text', text: `[${PRETURN_MARK}] ${TEXT}\n\n早先的问题` }] },
+        { id: 'm2', role: 'user', source: { kind: 'user' }, content: [{ type: 'text', text: '新一轮的问题' }] },
+      ],
+    }
+    const out = await handler({}, async () => decision)
+    expect(out).toBe(decision)
+    expect(out.messages?.[1]?.content?.[0]?.text).toBe('新一轮的问题')
+  })
+
+  it('handler：首条用户消息无可注入文本块时不向后顺延', async () => {
+    const ctx = createMockContext()
+    registerPerTurnNudge(ctx, () => TEXT)
+    const handler = captureHandler(ctx)
+    const decision: PreStepDecisionLike = {
+      kind: 'enter',
+      messages: [
+        { id: 'm1', role: 'user', source: { kind: 'user' }, content: [{ type: 'image' }] },
+        { id: 'm2', role: 'user', source: { kind: 'user' }, content: [{ type: 'text', text: '后一条' }] },
+      ],
+    }
+    const out = await handler({}, async () => decision)
+    expect(out).toBe(decision)
   })
 
   it('handler：非用户消息不注入', async () => {
