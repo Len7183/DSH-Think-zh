@@ -1,0 +1,3 @@
+# 仓库内统一 LF：本机在 Windows 开发，若混入 CRLF 会让 CI 的产物一致性守卫
+# （git diff --exit-code -- lib）产生假失败，也会污染 PR diff。
+* text=auto eol=lf

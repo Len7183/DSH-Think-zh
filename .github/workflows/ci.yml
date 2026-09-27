@@ -25,3 +25,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      # lib/ 是提交进仓库的构建产物（GitHub 安装方式直接消费包内 lib/），
+      # 源码改了却漏提交产物 = 用户装到旧逻辑，这里做硬守卫。
+      - name: 产物一致性守卫（lib/ 必须与 src/ 同步提交）
+        run: git diff --exit-code -- lib

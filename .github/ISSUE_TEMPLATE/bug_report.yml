@@ -1,0 +1,65 @@
+name: Bug 反馈
+description: 插件未注入、设置项异常、或加载报错
+title: '[Bug] '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提交前先确认：插件是用 `dsh plugin --profile <名> add ...` 安装的，且**安装后重启过 DSH**。
+        漏重启是「装了没反应」最常见的原因。
+  - type: input
+    id: dsh-version
+    attributes:
+      label: DSH 版本
+      description: '`dsh --version` 的输出。设置项（思考语言行）需要 0.1.7 及以上'
+      placeholder: 0.1.7-rc.2
+    validations:
+      required: true
+  - type: input
+    id: plugin-version
+    attributes:
+      label: dsh-think-zh 版本
+      placeholder: 1.1.0（或安装时固定的 commit SHA）
+    validations:
+      required: true
+  - type: dropdown
+    id: channel
+    attributes:
+      label: 出问题的环节
+      options:
+        - 静态 system prompt section（injectPrompt）
+        - 每轮用户消息注入（injectPerTurn）
+        - 设置 → 通用 →「思考语言」行
+        - 安装或加载（Harness 启动报错 / 插件未组合）
+        - 其他
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: profile 配置
+      description: '`~/.dsh/profiles/<profile>/cordis.patch.yml` 里 `dsh-think-zh` 条目的内容（本机路径请脱敏）'
+      render: yaml
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 复现步骤
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: 期望行为 / 实际行为
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志或轨迹视图片段
+      description: 降级路径会以 `dsh-think-zh:` 开头记 error 日志；轨迹视图里贴出相关 section 文本
+      render: text
+    validations:
+      required: false
