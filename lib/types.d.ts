@@ -44,7 +44,6 @@ export interface MinimalContext {
         prepend?: boolean;
     }) => unknown;
     logger: {
-        warn(...args: unknown[]): void;
         error(...args: unknown[]): void;
     };
 }
