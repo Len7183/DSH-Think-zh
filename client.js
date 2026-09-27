@@ -103,13 +103,15 @@ window.__ModuleLoader__.load({
     }
 
     /**
-     * 取生效档位：宿主文档里的值必须落在档位表内，否则（未设置/非法）回退默认档。
+     * 取生效档位：宿主文档里的值经 trim/小写归一后必须落在档位表内，否则（未设置/非法）
+     * 回退默认档——归一规则与 host 侧 normalizeThinkingLanguage 一致，两侧取值才不会分叉。
      * @param snapshot - configForms 快照。
      */
     function pickId(snapshot) {
       const value = snapshot !== undefined && snapshot !== null ? snapshot.value : undefined
       const raw = value !== null && typeof value === 'object' ? value[FIELD] : undefined
-      return THINKING_LANGUAGE_OPTIONS.some((option) => option.id === raw) ? raw : DEFAULT_ID
+      const normalized = typeof raw === 'string' ? raw.trim().toLowerCase() : raw
+      return THINKING_LANGUAGE_OPTIONS.some((option) => option.id === normalized) ? normalized : DEFAULT_ID
     }
 
     /**
@@ -136,18 +138,33 @@ window.__ModuleLoader__.load({
       const title = typeof t === 'function' ? t('thinkingLanguage.title') : FALLBACK_TITLE
       const failedText = typeof t === 'function' ? t('thinkingLanguage.saveFailed') : DICT.zh['thinkingLanguage.saveFailed']
 
-      // 打开时按触发器位置定位：fixed + 视口夹取，避免设置内容栏裁剪。
+      // 打开时按触发器位置定位：fixed + 视口夹取，避免设置内容栏裁剪；打开期间随窗口
+      // 缩放与任意滚动容器的滚动（capture 捕获）重算，菜单始终贴住触发器。
       useEffect(() => {
         if (!open) {
           setPosition(null)
-          return
+          return undefined
         }
-        const rect = triggerRef.current?.getBoundingClientRect()
-        if (rect === undefined) return
-        setPosition({
-          top: Math.round(rect.bottom + MENU_GAP),
-          right: Math.max(VIEWPORT_MARGIN, Math.round(window.innerWidth - rect.right)),
-        })
+        const update = () => {
+          const rect = triggerRef.current?.getBoundingClientRect()
+          if (rect === undefined) return
+          setPosition({
+            top: Math.round(rect.bottom + MENU_GAP),
+            right: Math.max(VIEWPORT_MARGIN, Math.round(window.innerWidth - rect.right)),
+          })
+        }
+        update()
+        window.addEventListener('resize', update)
+        document.addEventListener('scroll', update, true)
+        // 焦点直接移入菜单（优先当前选中项），方向键遍历立即可用。
+        const selected =
+          menuRef.current?.querySelector('button[aria-checked="true"]') ??
+          menuRef.current?.querySelector('button[role="menuitemradio"]')
+        ;(selected ?? triggerRef.current)?.focus()
+        return () => {
+          window.removeEventListener('resize', update)
+          document.removeEventListener('scroll', update, true)
+        }
       }, [open])
 
       // Escape 关闭并回焦触发器；点在行外/菜单外也关闭。
@@ -184,7 +201,7 @@ window.__ModuleLoader__.load({
         rows[next].focus()
       }
 
-      /** 提交选择：写 volatile 字段；被拒绝时回读并提示重试。 */
+      /** 提交选择：写 volatile 字段；返回值非 true 时回读快照确认，确实未落盘才提示重试。 */
       const select = async (id) => {
         triggerRef.current?.focus()
         setOpen(false)
@@ -193,7 +210,7 @@ window.__ModuleLoader__.load({
         setFailed(false)
         try {
           const accepted = await form.set(FIELD, id)
-          if (accepted !== true) setFailed(true)
+          if (accepted !== true && pickId(form.getSnapshot()) !== id) setFailed(true)
         } catch {
           setFailed(true)
         } finally {
@@ -254,7 +271,9 @@ window.__ModuleLoader__.load({
                   onKeyDown: onMenuKeyDown,
                   style:
                     position === null
-                      ? { visibility: 'hidden', top: 0, right: VIEWPORT_MARGIN }
+                      ? // 未定位的首帧用 opacity 隐藏（visibility:hidden 的元素不可聚焦，
+                        // 会让「打开即聚焦选中项」失效）；pointerEvents 挡住误触。
+                        { opacity: 0, pointerEvents: 'none', top: 0, right: VIEWPORT_MARGIN }
                       : { top: position.top, right: position.right },
                 },
                 items,
