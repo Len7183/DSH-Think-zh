@@ -143,7 +143,7 @@ def fibonacci(n): ...
 | 生效时机 | 每次请求的 system prompt 组装；section 文本以提供者形态注册，**每次组装现读** volatile 配置 |
 | 设置行 | Client 半 `client.js` 注册 `settings.general.item`（order 5），值经官方 settings 服务写 profile 条目 config |
 | 持久化 | host 侧 `Config` schema 中 `thinkingLanguage` 为 schemastery `.volatile()` 字段：改完即时生效、不重挂插件 |
-| 运行时开销 | 零检测、零缓冲、零写回；token 成本仅为每次请求约 75 字指令文本 |
+| 运行时开销 | 零检测、零缓冲、零写回；token 成本仅为每次请求的注入文本（简体中文档 90 字符、默认英文档 64 字符） |
 
 兼容性说明：设置项依赖宿主 settings 服务的 volatile 字段，要求 `@deepseek-ai/dsh` **0.1.7** 及以上；
 仅注入能力在 0.1.0-rc.6 起可用。`section()` 的注册在宿主侧是 cordis effect，随插件所在 context 卸载自动回收。
