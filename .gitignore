@@ -11,6 +11,16 @@ coverage/
 # Logs
 *.log
 npm-debug.log*
+pnpm-debug.log*
+
+# 环境与凭据（profile 配置、registry token 都不入库）
+.env
+.env.local
+.env.*.local
+.npmrc
+
+# 打包产物
+*.tgz
 
 # OS / editor
 .DS_Store

@@ -1,7 +1,7 @@
 /**
  * dsh-think-zh — Client 半（Web）
  *
- * 在「设置 → 通用」注册「思考语言」行：标记与样式复刻相邻的「语言」行
+ * 在「设置 → 通用设置」注册「思考语言」行：标记与样式复刻相邻的「语言」行
  * （dsh-client-locale 的 LanguageRow），类名换成本插件前缀，颜色/圆角只用
  * `--dsw-alias-*` token。取值走官方 settings 服务（ctx.configForms），写入 profile
  * 条目 config 的 volatile 字段，因此改完即时生效、不重挂插件。

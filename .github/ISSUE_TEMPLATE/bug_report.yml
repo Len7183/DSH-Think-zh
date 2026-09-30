@@ -30,7 +30,7 @@ body:
       options:
         - 静态 system prompt section（injectPrompt）
         - 每轮用户消息注入（injectPerTurn）
-        - 设置 → 通用 →「思考语言」行
+        - 设置 → 通用设置 →「思考语言」行
         - 安装或加载（Harness 启动报错 / 插件未组合）
         - 其他
     validations:
