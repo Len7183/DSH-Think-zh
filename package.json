@@ -38,8 +38,7 @@
     "lib",
     "client.js",
     "cordis.patch.yml",
-    "README.md",
-    "CHANGELOG.md"
+    "README.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
