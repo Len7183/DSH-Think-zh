@@ -20,7 +20,7 @@ body:
     id: plugin-version
     attributes:
       label: dsh-think-zh 版本
-      placeholder: 1.1.0（或安装时固定的 commit SHA）
+      placeholder: 1.0.0（或安装时固定的 commit SHA）
     validations:
       required: true
   - type: dropdown

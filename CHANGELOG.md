@@ -4,33 +4,7 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
-## [1.1.0] - 2026-09-28
-
-### Fixed
-
-- **per-turn 注入幂等守卫漏过**：第一条用户消息已带 `[dsh-think-zh/preturn]` 标记时，旧逻辑按
-  「首个未标记文本块」继续向后扫描，把指令再注入同消息的后续文本块（多文本块场景），多轮历史下
-  更会逐轮污染后续用户消息。现只考虑数组中第一条用户消息：整条已含标记则原样返回，未含才注入
-  其首个文本块，绝不向后顺延；新增三例回归测试。
-- **设置行假「保存失败」**：`form.set` 返回值非 `true` 一律判失败；现回读快照确认，确实未落盘才
-  提示重试，宿主成功时返回非字面 `true` 不再误报。
-- 「思考语言」下拉菜单打开期间随窗口缩放与设置内容栏滚动（capture 捕获任意滚动容器）重算位置，
-  fixed 定位不再与触发器脱开；打开即把焦点移入当前选中项，方向键遍历立即可用（未定位首帧改用
-  opacity 隐藏，`visibility:hidden` 元素不可聚焦）。
-
-### Changed
-
-- `injectPerTurn` 与 `injectPrompt` 解耦为独立开关：`injectPrompt: false` 不再连带关闭 per-turn 注入，
-  可单独以高显著通道投递指令。
-- 档位归一化大小写与首尾空白不敏感：手写 YAML 的 `thinkingLanguage: EN` 现按 `en` 生效
-  （此前被白名单拒绝而静默回退 `zh`）；client 侧 `pickId` 采用同一规则，两侧取值不分叉。
-
-### Note
-
-- `agent/pre-step` 处理器始终调用 `next()` 维持瀑布契约（处理器不得短路）；`aborted` 只跳过指令改写，
-  链路行为交由宿主自查。
-
-## [1.0.0] - 2026-09-27
+## [1.0.0] - 2026-09-28
 
 ### Added
 
@@ -39,6 +13,9 @@
   两档：
   - `简体中文`（默认）：注入两条强制指令（思考用简体中文 + 回复跟随提问语言）；
   - `默认英文`：只注入回复条款，思考语言交给模型自身默认。
+- **per-turn 注入**（`injectPerTurn`，默认关）：面向对静态 system prompt section 服从弱的模型，
+  每轮在第一条用户消息前以用户消息形态前置同一指令（`agent/pre-step` 瀑布，prepend）；注入带
+  幂等标记 `[dsh-think-zh/preturn]`，宿主不提供该瀑布时降级跳过并记 error 日志。
 - **Client 半** `client.js`：零构建的 `window.__ModuleLoader__.load` bundle，经
   `ctx.slots.inject('settings.general.item')` 注册行（order 5，位于「语言」0 与「外观」10 之间），
   值经官方 settings 服务读写 profile 条目 config 的 `thinkingLanguage` 字段，文案走 locale 命名空间
@@ -48,18 +25,32 @@
   统一解引用（volatile 字段连默认值也是 `{ get() }` 引用）。
 - 导出宿主用的 `Config` schema（schemastery），profile patch 中的 config 由宿主按 schema 解析。
 
+### Fixed
+
+- **per-turn 幂等边界**：只认数组中第一条用户消息——整条已含 `[dsh-think-zh/preturn]` 标记即原样
+  返回，未含才注入其首个文本块，不向后续文本块或后续用户消息顺延。
+- **设置行保存反馈**：`form.set` 返回值非字面 `true` 时回读快照确认，确实未落盘才提示
+  「保存失败，请重试」。
+- 「思考语言」下拉菜单打开期间随窗口缩放与任意滚动容器（capture 捕获）重算位置，fixed 定位贴合
+  触发器；打开即聚焦当前选中项，方向键遍历立即可用。
+
 ### Changed
 
+- `injectPerTurn` 与 `injectPrompt` 为独立开关：两者任一关闭都不影响另一条通道投递指令。
+- 档位归一化大小写与首尾空白不敏感（手写 YAML 的 `thinkingLanguage: EN` 等价 `en`），
+  client 侧 `pickId` 采用同一规则，两侧取值不分叉。
 - `resolveConfig` 入参放宽为 `RawConfigInput`（字段 unknown），内部统一解 volatile 引用后归一：
   非布尔回退默认、`injectionText` 空白视作未自定义并按档位生成文本。
 - `registerLanguageInjection` / `registerPerTurnNudge` 改为接收文本提供者 `() => string`。
 - 包声明 `dsh.client`（platform web）与 `exports["./client"]`；新增可选 peerDependency
-  `@deepseek-ai/schemastery`（volatile 需 ≥3.18.3）；版本升至 1.0.0。
+  `@deepseek-ai/schemastery`（volatile 需 ≥3.18.3）；版本 1.0.0。
 - 文档按 1.0 重写；新增设计说明 `docs/superpowers/specs/2026-09-27-dsh-think-zh-v1.0-thinking-language.md`。
 
 ### Note
 
-- 默认档仍是 `简体中文`，与 0.2.0 的注入文本逐字一致：升级后未动设置者行为不变。
+- 默认档 `简体中文` 的注入文本与 0.2.0 逐字一致：沿用旧配置的用户行为不变。
+- `agent/pre-step` 处理器始终调用 `next()` 维持瀑布契约（处理器不得短路）；`aborted` 只跳过指令
+  改写，链路行为交由宿主自查。
 
 ## [0.2.0] - 2026-09-05
 
