@@ -1,7 +1,7 @@
 {
   "name": "dsh-think-zh",
   "version": "1.1.0",
-  "description": "让 DeepSeek Harness 的思考语言两档可控：「默认英文」只约束回复，「简体中文」连思考一并锁定；入口在「设置 → 通用设置」",
+  "description": "让模型的思考语言锁定为所选档位（简体中文 / 默认英文），档位在「设置 → 通用设置 → 思考语言」里随时切换；回复语言跟随提问语言。",
   "keywords": [
     "deepseek",
     "deepseek-harness",
