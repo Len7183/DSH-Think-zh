@@ -38,14 +38,16 @@ DeepSeek Harness 默认的思考语言常常为英文，这不利于中文使用
 - **档位在 GUI 里切换**：设置 → 通用设置 →「思考语言」，样式与相邻的「语言」行一致。
 - **改完即时生效**：档位是 volatile 配置，下一份请求即用新文本；不用重启、也不用重挂插件。
 - **两条投递通道**：静态 system prompt section（默认开）与每轮用户消息前置（`injectPerTurn`，默认关，用于对静态 section 服从弱的模型），两者相互独立。
-- **零运行时开销**：只注入一段文本，无语言检测、无缓冲、无写回；每次请求的额外成本就是那段指令本身（简体中文档 90 字符、默认英文档 64 字符）。
+- **零运行时开销**：只注入一段文本，无语言检测、无缓冲、无写回；每次请求的额外成本就是那段指令本身（默认英文档 64 字符、简体中文档 90 字符）。
 - **免构建安装**：仓库内已提交 `lib/` 构建产物，包不含任何安装期脚本，git 直装不触发 pnpm 的构建脚本拦截。
 
 ## 安装
 
-前置条件：
+前置条件（分级要求，按用到的能力取高者）：
 
-- DeepSeek Harness **≥ 0.1.7**（「思考语言」设置项依赖官方 settings 服务的 volatile 字段）。
+- DeepSeek Harness **≥ 0.1.0-rc.6**：静态 system prompt 注入（`injectPrompt`、`injectionText`）。
+- **≥ 0.1.2**：每轮用户消息注入（`injectPerTurn`，需 `agent/pre-step` 瀑布）。
+- **≥ 0.1.7**：「思考语言」设置项（依赖官方 settings 服务的 volatile 字段）。
 - 源码方式另需 Node.js ≥ 22.19 与 pnpm（`dsh plugin` 内部调用 pnpm）。
 
 ### 方式一：桌面应用内安装（推荐）
@@ -169,7 +171,7 @@ def fibonacci(n): ...
 
 静态 system prompt section 对多数模型已经够用，但**部分模型对静态 section 的服从弱**——实证：kimi k3-256k 在默认 effort 档、思考已开的情况下仍从第一步起用英文（2026-09-10）。这类场景把 `injectPerTurn` 打开，插件会在每轮请求的第一条用户消息前，以用户消息形态（与对话 steering 同一高显著通道）前置同一指令，文本同样跟随「思考语言」档位。
 
-- 注入形如 `[dsh-think-zh/preturn] <指令文本>`，带幂等标记：多 pre-step 调用不会重复叠加，也不会扩散到后续文本块或后续用户消息。
+- 注入形如 `[dsh-think-zh/preturn] <指令文本>`，带幂等标记：多 pre-step 调用不会重复叠加，也不会扩散到后续文本块或后续用户消息；幂等按首文本块前缀判定，用户正文出现该字样不会误判为已注入。
 - 依赖宿主的 `agent/pre-step` 瀑布；宿主不提供时记一条 `dsh-think-zh:` 开头的 error 日志并跳过，静态通道不受影响。
 - 两条通道独立：`injectPrompt: false` 时，仍可只用 per-turn 通道投递指令。
 
@@ -182,7 +184,7 @@ def fibonacci(n): ...
 | 生效时机 | 每次请求组装 system prompt 时现读；section 的 `text` 以提供者形态注册，volatile 配置改完立刻反映到下一份请求 |
 | 设置行 | `client.js` 注册 `settings.general.item`（order 5，位于「语言」0 与「外观」10 之间），取值经官方 settings 服务写入 profile 条目 config |
 | 持久化 | `thinkingLanguage` 是 schemastery `.volatile()` 字段：改完即时生效、不重挂插件 |
-| 运行时开销 | 无检测、无缓冲、无写回；token 成本就是那段指令（简体中文档 90 字符、默认英文档 64 字符） |
+| 运行时开销 | 无检测、无缓冲、无写回；token 成本就是那段指令（默认英文档 64 字符、简体中文档 90 字符） |
 
 `section()` 的注册在宿主侧是 cordis effect，随插件所在 context 卸载自动回收。
 
