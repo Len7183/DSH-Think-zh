@@ -32,8 +32,8 @@ window.__ModuleLoader__.load({
      * 由 tests/client.spec.ts 锁定；标签是固定文案（同「语言」行的 中文/English）。
      */
     const THINKING_LANGUAGE_OPTIONS = Object.freeze([
-      Object.freeze({ id: 'zh', label: '简体中文' }),
       Object.freeze({ id: 'en', label: '默认英文' }),
+      Object.freeze({ id: 'zh', label: '简体中文' }),
     ])
     const DEFAULT_ID = THINKING_LANGUAGE_OPTIONS[0].id
 

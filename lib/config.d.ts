@@ -7,17 +7,17 @@
  * 运行时现读使用，两者由单测锁定一致。
  */
 import z from '@deepseek-ai/schemastery';
-/** 思考语言可选档位；顺序即设置页下拉顺序。 */
-export declare const THINKING_LANGUAGES: readonly ["zh", "en"];
+/** 思考语言可选档位；顺序即设置页下拉顺序（默认档在前）。 */
+export declare const THINKING_LANGUAGES: readonly ["en", "zh"];
 export type ThinkingLanguage = (typeof THINKING_LANGUAGES)[number];
-/** 默认档：与 1.0 之前的内置文本逐字一致。 */
+/** 默认档（1.1.0 起）：默认英文——只注入回复跟随条款，思考语言交还模型。 */
 export declare const DEFAULT_THINKING_LANGUAGE: ThinkingLanguage;
 /**
  * 按档位生成强制指令：`zh` 两条款（含思考语言），`en` 只保留回复条款。
  * @param language - 归一化后的档位。
  */
 export declare function injectionTextFor(language: ThinkingLanguage): string;
-/** 默认注入文本（= `zh` 档文本）。 */
+/** 默认注入文本（= 默认档 `en` 的文本）。 */
 export declare const DEFAULT_INJECTION_TEXT: string;
 /** 归一化后的生效配置。 */
 export interface ResolvedConfig {

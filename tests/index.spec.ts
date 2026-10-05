@@ -20,7 +20,7 @@ describe('apply', () => {
   it('从包入口导出宿主用的 Config schema（loader 据此把 thinkingLanguage 建为 volatile 字段）', () => {
     expect(ExportedConfig).toBe(SourceConfig)
     const parsed = ExportedConfig({}) as { thinkingLanguage: { get(): string } }
-    expect(parsed.thinkingLanguage.get()).toBe('zh')
+    expect(parsed.thinkingLanguage.get()).toBe('en')
   })
   it('默认配置：注册注入 section，提供者返回默认指令', () => {
     const ctx = createMockContext()
@@ -30,10 +30,10 @@ describe('apply', () => {
     expect(spec.order).toBe(PROMPT_SECTION_ORDER)
     expect(spec.text()).toBe(DEFAULT_INJECTION_TEXT)
   })
-  it('thinkingLanguage=en：文本切换为只含回复条款', () => {
+  it('thinkingLanguage=zh：文本切换为含思考条款的两条指令', () => {
     const ctx = createMockContext()
-    apply(ctx, { thinkingLanguage: 'en' })
-    expect(capturedSpec(ctx).text()).toBe(injectionTextFor('en'))
+    apply(ctx, { thinkingLanguage: 'zh' })
+    expect(capturedSpec(ctx).text()).toBe(injectionTextFor('zh'))
   })
   it('volatile 引用现读：写入后同一 section 立即反映新档位（不重挂插件）', () => {
     let current = 'zh'
@@ -49,16 +49,18 @@ describe('apply', () => {
     apply(ctx, { injectPrompt: false })
     expect(ctx.systemPrompt.section).not.toHaveBeenCalled()
   })
-  it('默认配置：不注册 per-turn 注入（静态 section 足够 reasoning 模型）', () => {
+  it('默认配置：注册注入 section 与 assemble 置顶兜底，不注册 per-turn 注入', () => {
     const ctx = createMockContext()
     apply(ctx)
-    expect(ctx.on).not.toHaveBeenCalled()
+    expect(ctx.systemPrompt.section).toHaveBeenCalledTimes(1)
+    expect(ctx.on.mock.calls.map((call) => call[0])).toEqual(['system-prompt/assemble'])
   })
-  it('injectPerTurn=true：注册 agent/pre-step 注入（prepend）', () => {
+  it('injectPerTurn=true：在置顶兜底之外追加 agent/pre-step 注入（prepend）', () => {
     const ctx = createMockContext()
     apply(ctx, { injectPerTurn: true })
-    expect(ctx.on).toHaveBeenCalledTimes(1)
+    expect(ctx.on).toHaveBeenCalledTimes(2)
     expect(ctx.on).toHaveBeenCalledWith('agent/pre-step', expect.any(Function), { prepend: true })
+    expect(ctx.on).toHaveBeenCalledWith('system-prompt/assemble', expect.any(Function))
   })
   it('injectPerTurn 与 injectPrompt 相互独立：injectPrompt=false 仍可单独启用 per-turn', () => {
     const ctx = createMockContext()

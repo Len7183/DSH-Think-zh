@@ -129,7 +129,7 @@ describe('档位表', () => {
     expect(client.THINKING_LANGUAGE_OPTIONS.map((option) => option.id)).toEqual([...THINKING_LANGUAGES])
   })
   it('标签与规格一致，且表已冻结', () => {
-    expect(client.THINKING_LANGUAGE_OPTIONS.map((option) => option.label)).toEqual(['简体中文', '默认英文'])
+    expect(client.THINKING_LANGUAGE_OPTIONS.map((option) => option.label)).toEqual(['默认英文', '简体中文'])
     expect(Object.isFrozen(client.THINKING_LANGUAGE_OPTIONS)).toBe(true)
   })
 })

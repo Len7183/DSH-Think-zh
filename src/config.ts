@@ -9,11 +9,11 @@
 import z from '@deepseek-ai/schemastery'
 import { readVolatile } from './runtime.js'
 
-/** 思考语言可选档位；顺序即设置页下拉顺序。 */
-export const THINKING_LANGUAGES = ['zh', 'en'] as const
+/** 思考语言可选档位；顺序即设置页下拉顺序（默认档在前）。 */
+export const THINKING_LANGUAGES = ['en', 'zh'] as const
 export type ThinkingLanguage = (typeof THINKING_LANGUAGES)[number]
-/** 默认档：与 1.0 之前的内置文本逐字一致。 */
-export const DEFAULT_THINKING_LANGUAGE: ThinkingLanguage = 'zh'
+/** 默认档（1.1.0 起）：默认英文——只注入回复跟随条款，思考语言交还模型。 */
+export const DEFAULT_THINKING_LANGUAGE: ThinkingLanguage = 'en'
 
 const HEADER = '语言要求（强制）：'
 const REPLY_CLAUSE =
@@ -29,7 +29,7 @@ export function injectionTextFor(language: ThinkingLanguage): string {
     : `${HEADER}\n1. 思考（reasoning）必须使用简体中文。\n2. ${REPLY_CLAUSE}`
 }
 
-/** 默认注入文本（= `zh` 档文本）。 */
+/** 默认注入文本（= 默认档 `en` 的文本）。 */
 export const DEFAULT_INJECTION_TEXT = injectionTextFor(DEFAULT_THINKING_LANGUAGE)
 
 /** 归一化后的生效配置。 */

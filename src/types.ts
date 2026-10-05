@@ -32,16 +32,36 @@ export interface PreStepDecisionLike {
   }>
 }
 
+/** system-prompt/assemble 瀑布的最小结构声明——只声明本插件置顶重排所需的形状。 */
+export interface AssembledSectionLike {
+  readonly name?: string
+}
+
+export interface AssembledPromptLike {
+  sections?: AssembledSectionLike[]
+}
+
 export interface MinimalContext {
   systemPrompt: {
     section(section: PromptSectionLike): () => void
   }
-  /** host 提供 agent/pre-step 瀑布时注册 per-turn 注入；缺失时降级跳过。 */
-  on?: (
+  /**
+   * host 瀑布注册面：per-turn 注入走 `agent/pre-step`（prepend），
+   * 静态 section 的置顶兜底走 `system-prompt/assemble`。缺失时各自降级跳过。
+   */
+  on?: ((
     event: 'agent/pre-step',
     handler: (payload: PreStepPayloadLike, next: () => Promise<PreStepDecisionLike>) => Promise<PreStepDecisionLike>,
     opts?: { prepend?: boolean },
-  ) => unknown
+  ) => unknown) & ((
+    event: 'system-prompt/assemble',
+    handler: (
+      assembly: AssembledPromptLike,
+      context: unknown,
+      next: () => Promise<AssembledPromptLike>,
+    ) => Promise<AssembledPromptLike>,
+    opts?: { prepend?: boolean },
+  ) => unknown)
   logger: {
     error(...args: unknown[]): void
   }

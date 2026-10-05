@@ -45,29 +45,27 @@ describe('resolveConfig', () => {
   it('自定义 injectionText 优先于思考语言档位', () => {
     expect(resolveConfig({ injectionText: '自定义', thinkingLanguage: 'en' }).injectionText).toBe('自定义')
   })
-  it('默认指令同时约束思考、回复与保留原文', () => {
-    expect(DEFAULT_INJECTION_TEXT).toContain('思考')
+  it('默认指令（默认英文档）只约束回复与保留原文，不含思考条款', () => {
     expect(DEFAULT_INJECTION_TEXT).toContain('回复')
-    expect(DEFAULT_INJECTION_TEXT).toContain('简体中文')
     expect(DEFAULT_INJECTION_TEXT).toContain('保持原文')
-    expect(DEFAULT_INJECTION_TEXT).toContain('必须')
     expect(DEFAULT_INJECTION_TEXT).toContain('提问')
+    expect(DEFAULT_INJECTION_TEXT).not.toContain('思考')
   })
 })
 
 describe('thinkingLanguage', () => {
-  it('默认档为 zh，且档位白名单为 zh/en', () => {
-    expect(DEFAULT_THINKING_LANGUAGE).toBe('zh')
-    expect(DEFAULT_CONFIG.thinkingLanguage).toBe('zh')
-    expect([...THINKING_LANGUAGES]).toEqual(['zh', 'en'])
+  it('默认档为 en（1.1.0 起），且档位白名单为 en/zh（默认档在前）', () => {
+    expect(DEFAULT_THINKING_LANGUAGE).toBe('en')
+    expect(DEFAULT_CONFIG.thinkingLanguage).toBe('en')
+    expect([...THINKING_LANGUAGES]).toEqual(['en', 'zh'])
   })
   it('zh 档文本逐字等于两条强制指令', () => {
     expect(injectionTextFor('zh')).toBe(ZH_TEXT)
-    expect(DEFAULT_INJECTION_TEXT).toBe(ZH_TEXT)
   })
-  it('en 档文本只保留回复条款，重新编号为 1.，且不含思考条款', () => {
+  it('en 档文本只保留回复条款，重新编号为 1.，且不含思考条款；即默认注入文本', () => {
     expect(injectionTextFor('en')).toBe(EN_TEXT)
     expect(injectionTextFor('en')).not.toContain('思考')
+    expect(DEFAULT_INJECTION_TEXT).toBe(EN_TEXT)
   })
   it('无自定义文本时按档位生成', () => {
     expect(resolveConfig({ thinkingLanguage: 'en' }).injectionText).toBe(EN_TEXT)
@@ -79,17 +77,17 @@ describe('thinkingLanguage', () => {
     expect(normalizeThinkingLanguage('en')).toBe('en')
     expect(normalizeThinkingLanguage('EN')).toBe('en')
     expect(normalizeThinkingLanguage(' en ')).toBe('en')
-    expect(normalizeThinkingLanguage(null)).toBe('zh')
-    expect(normalizeThinkingLanguage(undefined)).toBe('zh')
-    expect(normalizeThinkingLanguage('auto')).toBe('zh')
-    expect(normalizeThinkingLanguage('AUTO')).toBe('zh')
-    expect(normalizeThinkingLanguage(42)).toBe('zh')
-    expect(normalizeThinkingLanguage({ get: () => 'en' })).toBe('zh')
+    expect(normalizeThinkingLanguage(null)).toBe('en')
+    expect(normalizeThinkingLanguage(undefined)).toBe('en')
+    expect(normalizeThinkingLanguage('auto')).toBe('en')
+    expect(normalizeThinkingLanguage('AUTO')).toBe('en')
+    expect(normalizeThinkingLanguage(42)).toBe('en')
+    expect(normalizeThinkingLanguage({ get: () => 'zh' })).toBe('en')
   })
   it('resolveConfig 对非法档位不抛错并回退默认', () => {
-    expect(resolveConfig({ thinkingLanguage: null }).thinkingLanguage).toBe('zh')
-    expect(resolveConfig({ thinkingLanguage: 42 }).thinkingLanguage).toBe('zh')
-    expect(resolveConfig({ thinkingLanguage: 'auto' }).thinkingLanguage).toBe('zh')
+    expect(resolveConfig({ thinkingLanguage: null }).thinkingLanguage).toBe('en')
+    expect(resolveConfig({ thinkingLanguage: 42 }).thinkingLanguage).toBe('en')
+    expect(resolveConfig({ thinkingLanguage: 'auto' }).thinkingLanguage).toBe('en')
   })
   it('resolveConfig 解引用 volatile 引用（宿主 schema 解析后的形态）', () => {
     expect(resolveConfig({ thinkingLanguage: { get: () => 'en' } }).thinkingLanguage).toBe('en')
@@ -118,6 +116,6 @@ describe('宿主 Config schema', () => {
     expect(resolveConfig(parsed as never).injectionText).toBe(EN_TEXT)
   })
   it('schema 对非法档位值回退默认（volatile 字段的白名单由运行时归一兜底）', () => {
-    expect(resolveConfig(Config({ thinkingLanguage: 'zzz' as never })).thinkingLanguage).toBe('zh')
+    expect(resolveConfig(Config({ thinkingLanguage: 'zzz' as never })).thinkingLanguage).toBe('en')
   })
 })

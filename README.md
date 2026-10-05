@@ -5,7 +5,7 @@
 [![Node](https://img.shields.io/badge/node-%E2%89%A522.19-339933)](package.json)
 [![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.1.7-5B6CFF)](package.json)
 
-DeepSeek Harness（DSH）插件：**把模型的思考（reasoning）锁定为简体中文**，档位在
+DeepSeek Harness（DSH）插件：**把模型的思考（reasoning）语言锁定为所选档位**（简体中文 / 默认英文），档位在
 **设置 → 通用设置 →「思考语言」**里随时切换；回复语言跟随提问语言。
 
 ## 项目解决什么问题
@@ -13,7 +13,7 @@ DeepSeek Harness（DSH）插件：**把模型的思考（reasoning）锁定为�
 DeepSeek Harness 默认的思考语言常常为英文，这不利于中文使用者阅读推理过程、复核结论。
 本插件在每次请求的 system prompt 中注入一条精简的强制语言指令，使：
 
-- **思考语言可控**：默认档强制简体中文，也可切到「默认英文」，把思考语言交还模型；
+- **思考语言可控**：两档可选——「简体中文」强制思考用简体中文，「默认英文」只约束回复、把思考语言交还模型（1.1.0 起为默认档）；
 - **回复跟随提问语言**：中文提问用中文答，英文提问用英文答，判断不出语言倾向时默认简体中文；
 - **代码、标识符、文件路径、命令等保持原文**，不翻译。
 
@@ -29,16 +29,17 @@ DeepSeek Harness 默认的思考语言常常为英文，这不利于中文使用
 - [工作原理](#工作原理)
 - [兼容性](#兼容性)
 - [常见问题](#常见问题)
-- [开发与贡献](#开发与贡献)
 - [许可](#许可)
 
 ## 特性
 
-- **默认档注入两条强制条款**：思考必须用简体中文 + 回复跟随提问语言；切到「默认英文」则只保留回复条款，思考语言交还模型。
+- **两档思考语言**：「简体中文」注入两条强制条款（思考用简体中文 + 回复跟随提问语言）；「默认英文」（1.1.0 起的默认档）只保留回复条款，思考语言交还模型。
+- **指令位于 system prompt 最上层**：order -1000000 排在宿主全部内置 section（最小的是 harness 身份段 -1000）之前；另在 `system-prompt/assemble` 瀑布末端把该段重排到首位兜底，防止其他插件以更小 order 或瀑布改序插队（1.1.0 起）。
 - **档位在 GUI 里切换**：设置 → 通用设置 →「思考语言」，样式与相邻的「语言」行一致。
 - **改完即时生效**：档位是 volatile 配置，下一份请求即用新文本；不用重启、也不用重挂插件。
 - **两条投递通道**：静态 system prompt section（默认开）与每轮用户消息前置（`injectPerTurn`，默认关，用于对静态 section 服从弱的模型），两者相互独立。
-- **零运行时开销**：只注入一段文本，无语言检测、无缓冲、无写回；每次请求的额外成本就是那段指令本身（简体中文档 90 字符，默认英文档 64 字符）。
+- **零运行时开销**：只注入一段文本，无语言检测、无缓冲、无写回；每次请求的额外成本就是那段指令本身（简体中文档 90 字符、默认英文档 64 字符）。
+- **免构建安装**：仓库内已提交 `lib/` 构建产物，包不含任何安装期脚本，git 直装不触发 pnpm 的构建脚本拦截。
 
 ## 安装
 
@@ -67,7 +68,7 @@ dsh plugin --profile <profile 名> add github:Len7183/DSH-Think-zh#<commit-sha>
 
 - `<profile 名>` 即 `~/.dsh/profiles/<名字>` 的目录名；等价写法 `npx @deepseek-ai/dsh plugin ...`。
 - 桌面应用自己的 `desktop` profile 由应用独占管理，`dsh plugin` 对它不可用——桌面用户走方式一。
-- 仓库内已提交 `lib/` 构建产物，安装时不需要跑构建脚本。若 pnpm 提示 git 依赖的 prepare 被阻止，把提示里的 key 加到该 profile 的 `pnpm-workspace.yaml` 下 `allowBuilds` 后重跑即可。
+- 仓库内已提交 `lib/` 构建产物，且包不含任何安装期脚本（1.1.0 起移除了 `prepare`），从 git 安装不需要本机构建，也不会触发 pnpm 对 git 依赖构建脚本的 `allowBuilds` 拦截——1.0.x 安装报 `ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED` 即此因，升级后消除。
 
 ### 方式三：从源码安装
 
@@ -89,7 +90,7 @@ dsh plugin --profile <profile 名> add <本目录绝对路径>
 
 **设置 → 通用设置**，在「语言」行下方即是「思考语言」两档。
 
-**简体中文**（默认）：
+**简体中文**：
 
 ```
 语言要求（强制）：
@@ -97,7 +98,7 @@ dsh plugin --profile <profile 名> add <本目录绝对路径>
 2. 回复使用与用户提问相同的语言；无法判断时默认简体中文。代码、标识符、文件路径、命令等保持原文，不翻译。
 ```
 
-**默认英文**：
+**默认英文**（1.1.0 起的默认档）：
 
 ```
 语言要求（强制）：
@@ -106,7 +107,7 @@ dsh plugin --profile <profile 名> add <本目录绝对路径>
 
 - **即时生效**：改完的下一份请求即用新文本；已经发出的那一轮不回溯改写。
 - **持久化**：写入当前 profile 的 `cordis.patch.yml`，即 `dsh-think-zh` 条目的 `config.thinkingLanguage`。
-- **默认档与 1.0 之前的内置文本逐字一致**：升级后没动过设置的用户行为不变。
+- **1.0 → 1.1 默认档变更**：1.0 的默认档为「简体中文」，1.1 起为「默认英文」。已在设置页手动选过档位的用户不受影响（档位持久化在 profile 里）；从未改过设置的用户，升级后思考语言会变为不受约束，需要中文思考的话到设置页选回「简体中文」。
 - 「默认英文」档不注入思考语言条款，模型是否仍用中文思考取决于模型自身。
 
 ### 验证是否生效
@@ -121,7 +122,7 @@ dsh --profile <profile 名> --dump-config | grep dsh-think-zh
 
 ### 输入输出示例
 
-中文提问（默认「简体中文」档）：
+中文提问（「简体中文」档）：
 
 ```
 用户：请帮我写一个计算斐波那契数列的 Python 函数。
@@ -131,7 +132,7 @@ dsh --profile <profile 名> --dump-config | grep dsh-think-zh
 def fibonacci(n): ...
 ```
 
-英文提问（默认「简体中文」档：思考仍为中文，回复跟随英文）：
+英文提问（「简体中文」档：思考仍为中文，回复跟随英文）：
 
 ```
 用户：Write a Python function to compute the Fibonacci sequence.
@@ -150,7 +151,7 @@ def fibonacci(n): ...
 | `injectPrompt` | boolean | `true` | 是否把指令注册为 system prompt section（静态通道） |
 | `injectionText` | string | `''` | 自定义指令文本；非空时整段生效，「思考语言」档位被忽略 |
 | `injectPerTurn` | boolean | `false` | 是否每轮在用户消息前额外注入（高显著通道） |
-| `thinkingLanguage` | `zh` \| `en` | `zh` | 设置页写入的档位；大小写与首尾空白不敏感，一般无需手改 |
+| `thinkingLanguage` | `zh` \| `en` | `en` | 设置页写入的档位；大小写与首尾空白不敏感，一般无需手改 |
 
 想在配置文件里直接改，就在 `~/.dsh/profiles/<profile 名>/cordis.patch.yml` 的 `dsh-think-zh` 条目下追加 `config`：
 
@@ -161,7 +162,7 @@ def fibonacci(n): ...
     injectPrompt: true
     injectionText: ''           # 非空时整段生效，档位被忽略
     injectPerTurn: false
-    thinkingLanguage: zh        # 大小写/首尾空白不敏感
+    thinkingLanguage: zh        # 可选 zh / en，大小写与首尾空白不敏感
 ```
 
 ### injectPerTurn：每轮注入（可选）
@@ -177,11 +178,11 @@ def fibonacci(n): ...
 | 环节 | 机制 |
 | --- | --- |
 | 加载依赖 | 插件声明 `inject: [systemPrompt]`，cordis 等 `systemPrompt` 服务就绪后才执行 `apply` |
-| 注入点 | `ctx.systemPrompt.section()` 注册 `dsh-think-zh/language`（order 2，位于 persona 之后、一方工具指引之前） |
+| 注入点 | `ctx.systemPrompt.section()` 注册 `dsh-think-zh/language`（order -1000000：宿主按 order 升序、平局按名称排序 sections，最小内置段是 harness 身份段 -1000，本段稳居其前）；并在 `system-prompt/assemble` 瀑布末端把该段重排到 sections 首位——排序发生在瀑布之前、瀑布返回的顺序即最终顺序，末端重排是第二重保障，兜住其他插件以更小 order 注册或在瀑布中改序的情况 |
 | 生效时机 | 每次请求组装 system prompt 时现读；section 的 `text` 以提供者形态注册，volatile 配置改完立刻反映到下一份请求 |
 | 设置行 | `client.js` 注册 `settings.general.item`（order 5，位于「语言」0 与「外观」10 之间），取值经官方 settings 服务写入 profile 条目 config |
 | 持久化 | `thinkingLanguage` 是 schemastery `.volatile()` 字段：改完即时生效、不重挂插件 |
-| 运行时开销 | 无检测、无缓冲、无写回；token 成本就是那段指令（简体中文档 90 字符，默认英文档 64 字符） |
+| 运行时开销 | 无检测、无缓冲、无写回；token 成本就是那段指令（简体中文档 90 字符、默认英文档 64 字符） |
 
 `section()` 的注册在宿主侧是 cordis effect，随插件所在 context 卸载自动回收。
 
@@ -199,24 +200,15 @@ def fibonacci(n): ...
 
 **思考还是英文？** 先确认设置里选的是「简体中文」；已经是而模型仍不服从，说明它对静态 section 服从弱，打开 `injectPerTurn`。
 
+**git 安装报 `ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED`？** 安装的是 1.0.x：那个版本带 `prepare` 构建脚本，pnpm 默认拦截 git 依赖的构建脚本。升级到 1.1.0+ 重装即可（脚本已移除）；或按报错提示把对应 key 加进 profile 的 `pnpm-workspace.yaml` 的 `allowBuilds`。
+
 **设置里没有「思考语言」行？** 宿主低于 0.1.7，升级 DSH。
 
 **设置行显示「保存失败，请重试」？** profile 目录写入失败，检查 `~/.dsh/profiles/<profile 名>` 的写权限后重试。
 
 **轨迹视图在哪？** 先在 设置 → 通用设置 打开「代码工作工具」。
 
-## 开发与贡献
-
-```bash
-npm install
-npm test        # vitest 单元测试（含 client bundle 契约）
-npm run typecheck
-npm run build   # tsc 构建 host 半到 lib/
-```
-
-`client.js` 是手写的零构建 bundle（`window.__ModuleLoader__.load`），由宿主直接交给浏览器，不经 tsc；它的契约（模块 id、inject、注册参数、档位表与 host 常量一致）由 `tests/client.spec.ts` 锁定。改过 `src/` 必须重新构建并提交 `lib/`——仓库里的产物就是安装时被加载的那一份，CI 有硬守卫。
-
-Bug 与功能建议走 [Issues](https://github.com/Len7183/DSH-Think-zh/issues)。
+**Bug 与功能建议提在哪？** 走 [Issues](https://github.com/Len7183/DSH-Think-zh/issues)。
 
 ## 许可
 
