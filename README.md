@@ -3,7 +3,7 @@
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![CI](https://github.com/Len7183/DSH-Think-zh/actions/workflows/ci.yml/badge.svg)](https://github.com/Len7183/DSH-Think-zh/actions/workflows/ci.yml)
 [![Node](https://img.shields.io/badge/node-%E2%89%A522.19-339933)](package.json)
-[![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.1.7-5B6CFF)](package.json)
+[![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.1.0-5B6CFF)](#兼容性)
 
 DeepSeek Harness（DSH）插件：**把模型的思考（reasoning）语言锁定为所选档位**（简体中文 / 默认英文），档位在
 **设置 → 通用设置 →「思考语言」**里随时切换；回复语言跟随提问语言。
@@ -82,7 +82,7 @@ npm run build
 dsh plugin --profile <profile 名> add <本目录绝对路径>
 ```
 
-> 安装必须经由 `dsh plugin` 或桌面插件页。在本目录直接 `npm install` 只会把包当普通依赖装进当前目录，不会注册进任何 profile。
+> 安装必须经由 `dsh plugin` 或桌面插件页。在本目录执行 `npm install` 只是安装开发依赖（构建、测试用）；插件本身只有经由 `dsh plugin` 或桌面插件页才会注册进 profile。
 
 ## 使用
 
@@ -193,6 +193,8 @@ def fibonacci(n): ...
 | 静态 system prompt 注入（`injectPrompt`、`injectionText`） | 0.1.0-rc.6 |
 | 每轮用户消息注入（`injectPerTurn`，需 `agent/pre-step` 瀑布） | 0.1.2 |
 | 「思考语言」设置项（需 settings 服务 volatile 字段，schemastery ≥ 3.18.3） | 0.1.7 |
+
+> 注：宿主内置 schemastery 低于 3.18.3 时插件仍正常加载，仅失去「改完即时生效」——档位变更随插件重挂生效，启动日志会给出提示。per-turn 注入在宿主消息缺省 `source` 字段时按 `role === 'user'` 回退判定。
 
 ## 常见问题
 

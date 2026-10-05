@@ -47,6 +47,6 @@ body:
     attributes:
       label: 环境
       description: '`dsh --version` 与 dsh-think-zh 版本'
-      placeholder: dsh 0.1.7-rc.2 / dsh-think-zh 1.0.0
+      placeholder: dsh 0.1.7-rc.2 / dsh-think-zh 1.1.0
     validations:
       required: false

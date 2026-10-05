@@ -6,6 +6,8 @@ import {
   DEFAULT_THINKING_LANGUAGE,
   THINKING_LANGUAGES,
   Config,
+  VOLATILE_SUPPORTED,
+  applyVolatile,
   injectionTextFor,
   normalizeThinkingLanguage,
   resolveConfig,
@@ -67,6 +69,10 @@ describe('thinkingLanguage', () => {
     expect(injectionTextFor('en')).not.toContain('思考')
     expect(DEFAULT_INJECTION_TEXT).toBe(EN_TEXT)
   })
+  it('注入文本字数与 README 标注一致（简体中文档 90 / 默认英文档 64 码点）', () => {
+    expect([...injectionTextFor('zh')]).toHaveLength(90)
+    expect([...injectionTextFor('en')]).toHaveLength(64)
+  })
   it('无自定义文本时按档位生成', () => {
     expect(resolveConfig({ thinkingLanguage: 'en' }).injectionText).toBe(EN_TEXT)
     expect(resolveConfig({ thinkingLanguage: 'en', injectionText: '   ' }).injectionText).toBe(EN_TEXT)
@@ -95,6 +101,23 @@ describe('thinkingLanguage', () => {
       injectPrompt: false,
       injectPerTurn: true,
     })
+  })
+})
+
+describe('applyVolatile：宿主 schemastery 特性探测', () => {
+  it('带 volatile 方法的字段被应用并返回引用', () => {
+    const ref = { get: () => 'en' }
+    const field = { volatile: () => ref }
+    expect(applyVolatile(field)).toBe(ref)
+  })
+  it('无 volatile 方法时原样返回（旧宿主降级为普通字段，不抛错）', () => {
+    const field = { default: () => 'en' }
+    expect(applyVolatile(field)).toBe(field)
+    expect(applyVolatile(undefined)).toBeUndefined()
+    expect(applyVolatile(null)).toBeNull()
+  })
+  it('本机 devDep schemastery ≥ 3.18.3：探测为支持', () => {
+    expect(VOLATILE_SUPPORTED).toBe(true)
   })
 })
 

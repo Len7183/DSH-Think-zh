@@ -1,9 +1,14 @@
-import { resolveConfig, type RawConfigInput } from './config.js'
+import { resolveConfig, VOLATILE_SUPPORTED, type RawConfigInput } from './config.js'
 import { registerLanguageInjection } from './injector.js'
 import { registerPerTurnNudge } from './preturn.js'
+import { readVolatile } from './runtime.js'
+import { DEFAULT_THINKING_LANGUAGE, THINKING_LANGUAGES } from './config.js'
 import type { MinimalContext } from './types.js'
 
 export const name = 'dsh-think-zh'
+
+/** 已告警过的非法档位值：volatile 现读下同一值每轮都会出现，只提示一次。 */
+const warnedThinkingLanguages = new Set<string>()
 
 /**
  * 宿主 Loader 只从包入口读取插件契约：`Config` 必须在这里导出，否则 profile patch
@@ -20,6 +25,14 @@ export const inject: readonly string[] = ['systemPrompt']
 
 /** 插件入口：按配置挂载注入器（静态 section + 可选 per-turn 用户消息注入）。 */
 export function apply(ctx: MinimalContext, config?: RawConfigInput): void {
+  if (!VOLATILE_SUPPORTED) {
+    ctx.logger.warn?.(
+      'dsh-think-zh: 宿主 schemastery < 3.18.3，thinkingLanguage 为普通字段，「思考语言」设置改完只随插件重挂生效（静态注入不受影响）',
+    )
+  }
+  warnInvalidThinkingLanguage(ctx, config)
+  // 开关只判一次；注入文本在提供者内现读 resolveConfig——thinkingLanguage 是 volatile
+  // 字段，设置页改完的下一份请求即生效（两次调用是设计使然而非重复计算）。
   const resolved = resolveConfig(config)
   // 每次现读：thinkingLanguage 是 volatile 字段，设置页改完的下一份请求即生效。
   const currentText = (): string => resolveConfig(config).injectionText
@@ -30,4 +43,18 @@ export function apply(ctx: MinimalContext, config?: RawConfigInput): void {
   if (resolved.injectPerTurn) {
     registerPerTurnNudge(ctx, currentText)
   }
+}
+
+/**
+ * 手写 YAML 的非法档位值（显式提供且不在白名单）静默回退默认档，提示一次帮用户定位。
+ * 空白值视作未设置不提示；volatile 读取异常按未设置处理。
+ */
+function warnInvalidThinkingLanguage(ctx: MinimalContext, config?: RawConfigInput): void {
+  const raw = readVolatile(config?.thinkingLanguage)
+  if (typeof raw !== 'string') return
+  const normalized = raw.trim().toLowerCase()
+  if (normalized === '' || (THINKING_LANGUAGES as readonly string[]).includes(normalized)) return
+  if (warnedThinkingLanguages.has(normalized)) return
+  warnedThinkingLanguages.add(normalized)
+  ctx.logger.warn?.(`dsh-think-zh: thinkingLanguage 非法值 "${raw.trim()}"，已回退默认档 ${DEFAULT_THINKING_LANGUAGE}`)
 }

@@ -18,7 +18,7 @@ export const PRETURN_MARK = 'dsh-think-zh/preturn'
 /**
  * 注册 per-turn 语言注入：把指令文本前置到每轮第一条用户消息的首个文本块。
  *
- * 只考虑数组中第一条 user 来源消息，绝不向后顺延：该消息任一文本块已含幂等标记
+ * 只考虑数组中第一条 user 来源消息，绝不向后顺延：该消息首个文本块已带幂等标记前缀
  * （PRETURN_MARK）时整条决策原样返回。此前按「首个未标记文本块」顺延的实现会让
  * 多 pre-step 调用把标记扩散到同消息后续文本块乃至后续用户消息，幂等守卫形同虚设。
  * @param ctx - 宿主上下文。
@@ -41,7 +41,10 @@ export function registerPerTurnNudge(ctx: MinimalContext, text: () => string): v
       if (payload?.signal?.aborted) {
         return decision
       }
-      const index = decision.messages.findIndex((msg) => !!msg && msg.source?.kind === 'user')
+      // 宿主消息缺省 source 字段时按 role 回退判定（类型声明两者均可选）。
+      const index = decision.messages.findIndex(
+        (msg) => !!msg && (msg.source ? msg.source.kind === 'user' : msg.role === 'user'),
+      )
       if (index === -1) {
         return decision
       }
@@ -51,8 +54,10 @@ export function registerPerTurnNudge(ctx: MinimalContext, text: () => string): v
       }
       const isText = (block: { type?: string; text?: string } | undefined): block is { type: 'text'; text: string } =>
         !!block && block.type === 'text' && typeof block.text === 'string'
-      // 幂等判定按整条消息：任一文本块已带标记即视为已注入。
-      if (msg.content.some((block) => isText(block) && block.text.includes(PRETURN_MARK))) {
+      // 幂等判定收窄为首文本块前缀：现行实现只在首个文本块打标；全文子串匹配会把
+      // 用户正文恰好出现标记字样（如粘贴本插件 README）的消息误判为已注入而跳过注入。
+      const firstBlock = msg.content[0]
+      if (isText(firstBlock) && firstBlock.text.startsWith(`[${PRETURN_MARK}] `)) {
         return decision
       }
       const blockIndex = msg.content.findIndex(isText)

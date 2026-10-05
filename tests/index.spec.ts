@@ -3,7 +3,6 @@ import { Config as ExportedConfig, apply, inject, name } from '../src/index.js'
 import { Config as SourceConfig, DEFAULT_INJECTION_TEXT, injectionTextFor } from '../src/config.js'
 import { PROMPT_SECTION_NAME, PROMPT_SECTION_ORDER } from '../src/injector.js'
 import { createMockContext } from './helpers.js'
-
 /** 取出 apply 注册的 section spec。 */
 function capturedSpec(ctx: ReturnType<typeof createMockContext>): { name: string; order: number; text: () => string } {
   expect(ctx.systemPrompt.section).toHaveBeenCalledTimes(1)
@@ -68,5 +67,35 @@ describe('apply', () => {
     expect(ctx.systemPrompt.section).not.toHaveBeenCalled()
     expect(ctx.on).toHaveBeenCalledTimes(1)
     expect(ctx.on).toHaveBeenCalledWith('agent/pre-step', expect.any(Function), { prepend: true })
+  })
+})
+
+describe('非法档位告警', () => {
+  it('显式非法值回退默认档时 warn 一次，重复出现不再提示', () => {
+    const ctx = createMockContext()
+    apply(ctx, { thinkingLanguage: 'jp' })
+    expect(ctx.logger.warn).toHaveBeenCalledTimes(1)
+    expect(String(ctx.logger.warn.mock.calls[0][0])).toContain('jp')
+    apply(ctx, { thinkingLanguage: 'jp' })
+    expect(ctx.logger.warn).toHaveBeenCalledTimes(1)
+  })
+  it('不同非法值各自提示一次', () => {
+    const ctx = createMockContext()
+    apply(ctx, { thinkingLanguage: 'klingon' })
+    expect(ctx.logger.warn).toHaveBeenCalledTimes(1)
+    expect(String(ctx.logger.warn.mock.calls[0][0])).toContain('klingon')
+  })
+  it('合法档位、空白值与未设置不告警', () => {
+    const ctx = createMockContext()
+    apply(ctx, { thinkingLanguage: 'en' })
+    apply(ctx, { thinkingLanguage: ' ZH ' })
+    apply(ctx, { thinkingLanguage: '   ' })
+    apply(ctx)
+    expect(ctx.logger.warn).not.toHaveBeenCalled()
+  })
+  it('volatile 引用现读到非法值同样告警一次', () => {
+    const ctx = createMockContext()
+    apply(ctx, { thinkingLanguage: { get: () => 'xx' } })
+    expect(ctx.logger.warn).toHaveBeenCalledTimes(1)
   })
 })

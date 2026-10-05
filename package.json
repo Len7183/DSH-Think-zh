@@ -23,7 +23,9 @@
     "url": "https://github.com/Len7183/DSH-Think-zh/issues"
   },
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "./client.js"
+  ],
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "exports": {
@@ -42,6 +44,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "lint": "eslint src tests client.js eslint.config.js",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
@@ -71,8 +74,13 @@
   },
   "devDependencies": {
     "@deepseek-ai/schemastery": "^3.18.4",
+    "@eslint/js": "^9.39.5",
     "@types/node": "^24.0.0",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^16.5.0",
     "typescript": "^5.7.0",
+    "typescript-eslint": "~8.46.0",
     "vitest": "^3.0.0"
   }
 }

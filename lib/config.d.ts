@@ -31,17 +31,29 @@ export interface ResolvedConfig {
     thinkingLanguage: ThinkingLanguage;
 }
 export declare const DEFAULT_CONFIG: ResolvedConfig;
+/**
+ * schemastery 的 `.volatile()` 是 ≥3.18.3 的能力；宿主内置更旧版本时模块加载期直接
+ * 调用会在 import 期抛 TypeError、插件整体加载失败（与「静态注入兼容 0.1.0-rc.6」的
+ * 承诺冲突）。加载期做特性探测，不支持时字段退化为普通值——仅失去「设置页改完即时
+ * 切换」，静态注入不受影响。
+ */
+export declare const VOLATILE_SUPPORTED: boolean;
+/**
+ * 对 schema 字段应用 `.volatile()`（宿主支持时）；不支持时原样返回普通字段。
+ * @param field - 待修饰的 schema 字段。
+ */
+export declare function applyVolatile<T>(field: T): T;
 /** 宿主 Loader 解析 profile patch 中本条目 config 所用的 schema。 */
 export declare const Config: z<Schemastery.ObjectS<NoInfer<{
     injectPrompt: z<boolean, boolean, "defined">;
     injectionText: z<string, string, "defined">;
     injectPerTurn: z<boolean, boolean, "defined">;
-    thinkingLanguage: z<string, string, "volatile-defined">;
+    thinkingLanguage: z<string, string, "defined">;
 }>>, Schemastery.ObjectT<NoInfer<{
     injectPrompt: z<boolean, boolean, "defined">;
     injectionText: z<string, string, "defined">;
     injectPerTurn: z<boolean, boolean, "defined">;
-    thinkingLanguage: z<string, string, "volatile-defined">;
+    thinkingLanguage: z<string, string, "defined">;
 }>>, "plain">;
 /** 来自 YAML／宿主的原始配置：字段类型不可信，一律按 unknown 处理。 */
 export interface RawConfigInput {

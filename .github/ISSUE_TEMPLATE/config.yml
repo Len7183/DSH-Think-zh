@@ -2,4 +2,4 @@ blank_issues_enabled: false
 contact_links:
   - name: 安装、配置与验证方法
     url: https://github.com/Len7183/DSH-Think-zh#readme
-    about: README 覆盖安装两种方式、四个配置项、以及「怎么确认已生效」
+    about: README 覆盖三种安装方式（桌面应用内 / 命令行 / 源码）、四个配置项，以及「怎么确认已生效」

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { PRETURN_MARK, registerPerTurnNudge } from '../src/preturn.js'
 import { DEFAULT_INJECTION_TEXT, injectionTextFor } from '../src/config.js'
 import type { PreStepDecisionLike } from '../src/types.js'
@@ -146,6 +146,61 @@ describe('registerPerTurnNudge', () => {
     }
     const out = await handler({}, async () => decision)
     expect(out.messages?.[0]?.content?.[0]?.text).toBe('reminder')
+  })
+
+  it('handler：宿主消息缺省 source 时按 role=user 回退判定并注入', async () => {
+    const ctx = createMockContext()
+    registerPerTurnNudge(ctx, () => TEXT)
+    const handler = captureHandler(ctx)
+    const decision: PreStepDecisionLike = {
+      kind: 'enter',
+      messages: [{ id: 'm1', role: 'user', content: [{ type: 'text', text: '你好' }] }],
+    }
+    const out = await handler({}, async () => decision)
+    expect(out.messages?.[0]?.content?.[0]?.text).toContain(PRETURN_MARK)
+  })
+
+  it('handler：source 存在且非 user 时不回退 role（source 判定优先）', async () => {
+    const ctx = createMockContext()
+    registerPerTurnNudge(ctx, () => TEXT)
+    const handler = captureHandler(ctx)
+    const decision: PreStepDecisionLike = {
+      kind: 'enter',
+      messages: [{ id: 's1', role: 'user', source: { kind: 'plugin' }, content: [{ type: 'text', text: 'reminder' }] }],
+    }
+    const out = await handler({}, async () => decision)
+    expect(out.messages?.[0]?.content?.[0]?.text).toBe('reminder')
+  })
+
+  it('handler：source 与 role 均缺省时不注入', async () => {
+    const ctx = createMockContext()
+    registerPerTurnNudge(ctx, () => TEXT)
+    const handler = captureHandler(ctx)
+    const decision: PreStepDecisionLike = {
+      kind: 'enter',
+      messages: [{ id: 'm1', content: [{ type: 'text', text: '匿名消息' }] }],
+    }
+    const out = await handler({}, async () => decision)
+    expect(out.messages?.[0]?.content?.[0]?.text).toBe('匿名消息')
+  })
+
+  it('handler：正文出现标记字样但首块无前缀时照常注入（回归：includes 全文误判）', async () => {
+    const ctx = createMockContext()
+    registerPerTurnNudge(ctx, () => TEXT)
+    const handler = captureHandler(ctx)
+    const decision: PreStepDecisionLike = {
+      kind: 'enter',
+      messages: [
+        {
+          id: 'm1',
+          role: 'user',
+          source: { kind: 'user' },
+          content: [{ type: 'text', text: `我在讨论 ${PRETURN_MARK} 的设计，请照常回答` }],
+        },
+      ],
+    }
+    const out = await handler({}, async () => decision)
+    expect(out.messages?.[0]?.content?.[0]?.text).toContain(`[${PRETURN_MARK}]`)
   })
 
   it('handler：aborted 信号直接透传，不改决策', async () => {

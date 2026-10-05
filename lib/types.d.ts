@@ -57,5 +57,7 @@ export interface MinimalContext {
     }) => unknown);
     logger: {
         error(...args: unknown[]): void;
+        /** 宿主日志面可能只有 error；warn 需以可选调用（`warn?.()`）使用。 */
+        warn?(...args: unknown[]): void;
     };
 }

@@ -1,10 +1,11 @@
-import { beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { THINKING_LANGUAGES } from '../src/config.js'
 
 interface ClientModule {
   inject: string[]
   apply(ctx: unknown): void
   THINKING_LANGUAGE_OPTIONS: ReadonlyArray<{ id: string; label: string }>
+  _internals: { pickId(snapshot: unknown): string; ensureStyles(): void }
 }
 
 /** 客户端 bundle 以 window.__ModuleLoader__.load 自注册；测试据此捕获 factory。 */
@@ -28,13 +29,13 @@ const reactStub = {
 
 beforeAll(async () => {
   const captured: LoaderDefinition[] = []
-  ;(globalThis as { window?: unknown }).window = {
+  vi.stubGlobal('window', {
     __ModuleLoader__: {
       load: (def: LoaderDefinition) => {
         captured.push(def)
       },
     },
-  }
+  })
   await import('../client.js')
   expect(captured).toHaveLength(1)
   definition = captured[0]
@@ -42,6 +43,10 @@ beforeAll(async () => {
     if (id === 'react') return reactStub
     throw new Error(`unexpected require: ${id}`)
   })
+})
+
+afterAll(() => {
+  vi.unstubAllGlobals()
 })
 
 describe('client bundle', () => {
@@ -131,5 +136,24 @@ describe('档位表', () => {
   it('标签与规格一致，且表已冻结', () => {
     expect(client.THINKING_LANGUAGE_OPTIONS.map((option) => option.label)).toEqual(['默认英文', '简体中文'])
     expect(Object.isFrozen(client.THINKING_LANGUAGE_OPTIONS)).toBe(true)
+  })
+})
+
+describe('pickId 归一规则（与 host 侧 normalizeThinkingLanguage 一致）', () => {
+  const pickId = (snapshot: unknown): string => client._internals.pickId(snapshot)
+
+  it('大小写与首尾空白不敏感', () => {
+    expect(pickId({ value: { thinkingLanguage: ' ZH ' } })).toBe('zh')
+    expect(pickId({ value: { thinkingLanguage: 'EN' } })).toBe('en')
+    expect(pickId({ value: { thinkingLanguage: 'en' } })).toBe('en')
+  })
+  it('白名单外回退默认档 en', () => {
+    expect(pickId({ value: { thinkingLanguage: 'jp' } })).toBe('en')
+    expect(pickId({ value: { thinkingLanguage: 42 } })).toBe('en')
+    expect(pickId({ value: {} })).toBe('en')
+  })
+  it('snapshot 缺失时回退默认档', () => {
+    expect(pickId(undefined)).toBe('en')
+    expect(pickId(null)).toBe('en')
   })
 })

@@ -1,7 +1,11 @@
 # dsh-think-zh 设计文档
 
+> **已过期**：本文档是 v1/v2 时代的历史设计记录，多处事实已与现状相反（如 section order、
+> `.gitignore` 策略、README 文件名、配置项数量、CHANGELOG 的存在与否）。勿据其实现；
+> 现行事实以 README 与 `docs/superpowers/specs/2026-09-27-dsh-think-zh-v1.0-thinking-language.md` 为准。
+
 日期：2026-08-15（v1）；2026-08-16（v2 重做，本文档当前生效版本）
-状态：v2 已批准（用户确认：只保留注入、文本精简、强制措辞）
+状态：v2 已批准（用户确认：只保留注入、文本精简、强制措辞）；后续演进见 1.0 spec 与仓库提交历史
 
 ## 背景与目标
 

@@ -22,6 +22,9 @@ describe('package.json 安装契约', () => {
     expect(pkg.scripts.prepublish).toBeUndefined()
     expect(pkg.scripts.postinstall).toBeUndefined()
   })
+  it('client.js 声明为唯一副作用文件（顶层 window.__ModuleLoader__.load 注册）', () => {
+    expect(pkg.sideEffects).toEqual(['./client.js'])
+  })
   it('打包清单包含安装所需的全部文件', () => {
     expect(pkg.files).toEqual(expect.arrayContaining(['lib', 'client.js', 'cordis.patch.yml', 'README.md']))
   })

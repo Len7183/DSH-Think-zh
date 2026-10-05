@@ -51,12 +51,31 @@ export const DEFAULT_CONFIG: ResolvedConfig = {
   thinkingLanguage: DEFAULT_THINKING_LANGUAGE,
 }
 
+/**
+ * schemastery 的 `.volatile()` 是 ≥3.18.3 的能力；宿主内置更旧版本时模块加载期直接
+ * 调用会在 import 期抛 TypeError、插件整体加载失败（与「静态注入兼容 0.1.0-rc.6」的
+ * 承诺冲突）。加载期做特性探测，不支持时字段退化为普通值——仅失去「设置页改完即时
+ * 切换」，静态注入不受影响。
+ */
+export const VOLATILE_SUPPORTED = typeof (z.string() as { volatile?: unknown }).volatile === 'function'
+
+/**
+ * 对 schema 字段应用 `.volatile()`（宿主支持时）；不支持时原样返回普通字段。
+ * @param field - 待修饰的 schema 字段。
+ */
+export function applyVolatile<T>(field: T): T {
+  if (typeof (field as { volatile?: unknown } | undefined)?.volatile === 'function') {
+    return (field as unknown as { volatile: () => T }).volatile()
+  }
+  return field
+}
+
 /** 宿主 Loader 解析 profile patch 中本条目 config 所用的 schema。 */
 export const Config = z.object({
   injectPrompt: z.boolean().default(DEFAULT_CONFIG.injectPrompt),
   injectionText: z.string().default(''),
   injectPerTurn: z.boolean().default(DEFAULT_CONFIG.injectPerTurn),
-  thinkingLanguage: z.string().default(DEFAULT_THINKING_LANGUAGE).volatile(),
+  thinkingLanguage: applyVolatile(z.string().default(DEFAULT_THINKING_LANGUAGE)),
 })
 
 /** 来自 YAML／宿主的原始配置：字段类型不可信，一律按 unknown 处理。 */

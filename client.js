@@ -139,7 +139,8 @@ window.__ModuleLoader__.load({
       const failedText = typeof t === 'function' ? t('thinkingLanguage.saveFailed') : DICT.zh['thinkingLanguage.saveFailed']
 
       // 打开时按触发器位置定位：fixed + 视口夹取，避免设置内容栏裁剪；打开期间随窗口
-      // 缩放与任意滚动容器的滚动（capture 捕获）重算，菜单始终贴住触发器。
+      // 缩放与任意滚动容器的滚动（capture 捕获）重算，菜单始终贴住触发器。贴底放不下
+      // 且上方放得下时向上展开，避免菜单溢出视口下缘。
       useEffect(() => {
         if (!open) {
           setPosition(null)
@@ -148,10 +149,16 @@ window.__ModuleLoader__.load({
         const update = () => {
           const rect = triggerRef.current?.getBoundingClientRect()
           if (rect === undefined) return
-          setPosition({
-            top: Math.round(rect.bottom + MENU_GAP),
-            right: Math.max(VIEWPORT_MARGIN, Math.round(window.innerWidth - rect.right)),
-          })
+          const menuHeight = menuRef.current?.offsetHeight || 160
+          const right = Math.max(VIEWPORT_MARGIN, Math.round(window.innerWidth - rect.right))
+          const flipUp =
+            rect.bottom + MENU_GAP + menuHeight > window.innerHeight - VIEWPORT_MARGIN &&
+            rect.top - MENU_GAP - menuHeight >= VIEWPORT_MARGIN
+          setPosition(
+            flipUp
+              ? { right, bottom: Math.round(window.innerHeight - rect.top + MENU_GAP) }
+              : { right, top: Math.round(rect.bottom + MENU_GAP) },
+          )
         }
         update()
         window.addEventListener('resize', update)
@@ -167,10 +174,15 @@ window.__ModuleLoader__.load({
         }
       }, [open])
 
-      // Escape 关闭并回焦触发器；点在行外/菜单外也关闭。
+      // Escape 关闭并回焦触发器；Tab 移出即关闭（不拦截默认行为，焦点自然流动），
+      // 避免焦点已离开的「幽灵菜单」；点在行外/菜单外也关闭。
       useEffect(() => {
         if (!open) return undefined
         const onKeyDown = (event) => {
+          if (event.key === 'Tab') {
+            setOpen(false)
+            return
+          }
           if (event.key !== 'Escape') return
           event.stopPropagation()
           setOpen(false)
@@ -274,7 +286,10 @@ window.__ModuleLoader__.load({
                       ? // 未定位的首帧用 opacity 隐藏（visibility:hidden 的元素不可聚焦，
                         // 会让「打开即聚焦选中项」失效）；pointerEvents 挡住误触。
                         { opacity: 0, pointerEvents: 'none', top: 0, right: VIEWPORT_MARGIN }
-                      : { top: position.top, right: position.right },
+                      : position.bottom === undefined
+                        ? { top: position.top, right: position.right }
+                        : // 向上展开：菜单底缘贴住触发器上缘。
+                          { bottom: position.bottom, right: position.right },
                 },
                 items,
               )
@@ -310,6 +325,8 @@ window.__ModuleLoader__.load({
       },
       /** 档位表的导出面：供单测锁定与 host 侧一致。 */
       THINKING_LANGUAGE_OPTIONS,
+      /** 纯逻辑导出面：供单测锁定归一规则（与 host 侧 normalizeThinkingLanguage 一致）与样式幂等。 */
+      _internals: { pickId, ensureStyles },
     }
   },
 })

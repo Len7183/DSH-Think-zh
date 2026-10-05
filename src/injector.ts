@@ -50,7 +50,8 @@ export function registerLanguageInjection(ctx: MinimalContext, text: () => strin
  * 在 `system-prompt/assemble` 瀑布末端把本插件 section 重排到首位。
  *
  * 宿主在瀑布前按 order 排序 sections，瀑布返回的顺序即最终顺序；末端重排兜住
- * 其他插件以更小 order 注册、或在瀑布中改序的情况。处理器形状与宿主自带的校验
+ * 其他插件以更小 order 注册、或在瀑布中改序的情况。重排为非原地（拷贝重建），
+ * 兼容冻结数组与共享引用。处理器形状与宿主自带的校验
  * 处理器同款（`await next()` 后修改并返回），找不到目标或已在首位时原样透传。
  * 宿主过老（无瀑布注册面）时静默跳过：order -1000000 已提供置顶保障。
  */
@@ -64,9 +65,13 @@ function registerAssemblyHoist(ctx: MinimalContext): void {
       const index = sections.findIndex((section) => section?.name === PROMPT_SECTION_NAME)
       // 已在首位（幂等）或被其他插件抑制时不动宿主决策。
       if (index <= 0) return assembled
-      const [ours] = sections.splice(index, 1)
-      sections.unshift(ours)
-      return assembled
+      const ours = sections[index]
+      if (!ours) return assembled
+      // 非原地重排：拷贝重建，兼容冻结数组与共享引用（与 preturn 的拷贝姿态一致）。
+      return {
+        ...assembled,
+        sections: [ours, ...sections.slice(0, index), ...sections.slice(index + 1)],
+      }
     })
   } catch (error: unknown) {
     ctx.logger.error(`dsh-think-zh: 注册 system-prompt/assemble 置顶兜底失败: ${String(error)}`)

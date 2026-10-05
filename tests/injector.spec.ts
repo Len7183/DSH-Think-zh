@@ -142,6 +142,32 @@ describe('assemble 置顶兜底', () => {
     expect(out.contexts).toBe(assembly.contexts)
     expect(out.tools).toBe(assembly.tools)
   })
+  it('handler：sections 为冻结数组时正常重排且不抛错（非原地修改）', async () => {
+    const ctx = createMockContext()
+    registerLanguageInjection(ctx, () => '请用中文')
+    const hoist = captureHoist(ctx)
+    const frozen = Object.freeze([
+      { name: 'deployment:persona-prefix' },
+      { name: PROMPT_SECTION_NAME },
+    ]) as unknown as AssembledPromptLike['sections']
+    const assembly: AssembledPromptLike = { sections: frozen }
+    const out = await hoist(assembly, {}, async () => assembly)
+    expect(out.sections?.[0]?.name).toBe(PROMPT_SECTION_NAME)
+    expect(out.sections).not.toBe(frozen)
+  })
+  it('handler：非原地重排——下游原数组的顺序保持不变', async () => {
+    const ctx = createMockContext()
+    registerLanguageInjection(ctx, () => '请用中文')
+    const hoist = captureHoist(ctx)
+    const sections = [{ name: PROMPT_SECTION_NAME }, { name: 'deployment:persona-prefix' }, { name: 'tool:bash' }]
+    const assembly: AssembledPromptLike = { sections }
+    await hoist(assembly, {}, async () => assembly)
+    expect(sections.map((section) => section.name)).toEqual([
+      PROMPT_SECTION_NAME,
+      'deployment:persona-prefix',
+      'tool:bash',
+    ])
+  })
   it('handler：重排作用于 next 的下游结果，而非入参 assembly', async () => {
     const ctx = createMockContext()
     registerLanguageInjection(ctx, () => '请用中文')
