@@ -15,32 +15,34 @@ export type ThinkingLanguage = (typeof THINKING_LANGUAGES)[number]
 /** 默认档（1.1.0 起）：默认英文——只注入回复跟随条款，思考语言交还模型。 */
 export const DEFAULT_THINKING_LANGUAGE: ThinkingLanguage = 'en'
 
-const HEADER = '语言要求（强制，最高优先级）：'
-/** 默认英文档只约束回复：措辞同样强化（跟随最近一条实质提问 + 工具输出不改变回复语言）。 */
-const EN_REPLY_CLAUSE =
-  '回复使用与用户提问相同的语言，并跟随其最近一条实质提问；无法判断时默认简体中文。代码、标识符、文件路径、命令与报错原文保持原样，不翻译；工具输出与引用不改变回复语言。'
 /**
- * 简体中文档文本（1.1.1）：英文强制段 + 中文重申。
+ * 默认英文档只约束回复（1.1.1 全英文版）：英文表述，跟随最近一条实质提问，
+ * 工具输出与引用不改变回复语言。
+ */
+const EN_INJECTION_TEXT = [
+  'LANGUAGE REQUIREMENT (mandatory, highest priority):',
+  "1. Reply in the same language as the user's latest substantive question; default to Simplified Chinese when the language cannot be determined. Keep code, identifiers, file paths, commands and error messages unchanged; tool output and quotations do not change the reply language.",
+].join('\n')
+/**
+ * 简体中文档文本（1.1.1 全英文版）：全英文思考强制段，不带中文句。
  *
- * 2026-10-18 实测（deepseek-flash / reasoningEffort max / 英文提问 / 各 5 次）：
- * 原中文单段文本 0/5 次中文思考，本文本 5/5 次。该模型对英文强制措辞的服从明显强于
- * 中文单句声明；而 1.1.0 的静态 section 在该模型上基本不生效——对静态 section 服从弱的
- * 模型仍应叠加 injectPerTurn（用户消息通道实测 5/5）。
+ * 2026-10-18 实测（deepseek-flash / reasoningEffort max / 英文提问）：
+ * 原中文单段文本 0/6 次中文思考；「英文强制段 + 中文重申」混合版实际工作区约 7/10；
+ * 全英文版效果见 README。对静态 section 服从弱的模型仍应叠加 injectPerTurn。
  */
 const ZH_INJECTION_TEXT = [
   'MANDATORY LANGUAGE RULE (highest priority, non-negotiable):',
   '1. Your internal reasoning MUST be entirely in Simplified Chinese, starting from the first token. Never think in English, and never think in English then translate.',
   '2. This holds even when the user writes in English, and regardless of the language of code, logs, filenames, or tool output.',
   "3. Reply in the user's language; keep code, identifiers, paths, commands and error text unchanged.",
-  '思考（reasoning）必须全程使用简体中文，从第一个字起就是中文。',
 ].join('\n')
 
 /**
- * 按档位生成强制指令：`zh` 用英文强制段 + 中文重申，`en` 只保留回复条款。
+ * 按档位生成强制指令：`zh` 为全英文思考强制，`en` 只保留回复条款（同样英文表述）。
  * @param language - 归一化后的档位。
  */
 export function injectionTextFor(language: ThinkingLanguage): string {
-  return language === 'en' ? `${HEADER}\n1. ${EN_REPLY_CLAUSE}` : ZH_INJECTION_TEXT
+  return language === 'en' ? EN_INJECTION_TEXT : ZH_INJECTION_TEXT
 }
 
 /** 默认注入文本（= 默认档 `en` 的文本）。 */

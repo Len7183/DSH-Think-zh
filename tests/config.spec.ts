@@ -18,10 +18,9 @@ const ZH_TEXT = [
   '1. Your internal reasoning MUST be entirely in Simplified Chinese, starting from the first token. Never think in English, and never think in English then translate.',
   '2. This holds even when the user writes in English, and regardless of the language of code, logs, filenames, or tool output.',
   "3. Reply in the user's language; keep code, identifiers, paths, commands and error text unchanged.",
-  '思考（reasoning）必须全程使用简体中文，从第一个字起就是中文。',
 ].join('\n')
 const EN_TEXT =
-  '语言要求（强制，最高优先级）：\n1. 回复使用与用户提问相同的语言，并跟随其最近一条实质提问；无法判断时默认简体中文。代码、标识符、文件路径、命令与报错原文保持原样，不翻译；工具输出与引用不改变回复语言。'
+  "LANGUAGE REQUIREMENT (mandatory, highest priority):\n1. Reply in the same language as the user's latest substantive question; default to Simplified Chinese when the language cannot be determined. Keep code, identifiers, file paths, commands and error messages unchanged; tool output and quotations do not change the reply language."
 
 describe('resolveConfig', () => {
   it('无输入时返回全部默认值', () => {
@@ -52,11 +51,11 @@ describe('resolveConfig', () => {
   it('自定义 injectionText 优先于思考语言档位', () => {
     expect(resolveConfig({ injectionText: '自定义', thinkingLanguage: 'en' }).injectionText).toBe('自定义')
   })
-  it('默认指令（默认英文档）只约束回复与保留原文，不含思考条款', () => {
-    expect(DEFAULT_INJECTION_TEXT).toContain('回复')
-    expect(DEFAULT_INJECTION_TEXT).toContain('保持原样')
-    expect(DEFAULT_INJECTION_TEXT).toContain('提问')
-    expect(DEFAULT_INJECTION_TEXT).not.toContain('思考')
+  it('默认指令（默认英文档）只约束回复与保留原文，不含思考条款（全英文）', () => {
+    expect(DEFAULT_INJECTION_TEXT).toContain('Reply')
+    expect(DEFAULT_INJECTION_TEXT).toContain('unchanged')
+    expect(DEFAULT_INJECTION_TEXT).toContain('question')
+    expect(DEFAULT_INJECTION_TEXT).not.toContain('reasoning')
   })
 })
 
@@ -66,17 +65,17 @@ describe('thinkingLanguage', () => {
     expect(DEFAULT_CONFIG.thinkingLanguage).toBe('en')
     expect([...THINKING_LANGUAGES]).toEqual(['en', 'zh'])
   })
-  it('zh 档文本逐字等于英文强制段 + 中文重申（1.1.1 实测有效措辞）', () => {
+  it('zh 档文本逐字等于全英文强制段（1.1.1 全英文版）', () => {
     expect(injectionTextFor('zh')).toBe(ZH_TEXT)
   })
   it('en 档文本只保留回复条款，重新编号为 1.，且不含思考条款；即默认注入文本', () => {
     expect(injectionTextFor('en')).toBe(EN_TEXT)
-    expect(injectionTextFor('en')).not.toContain('思考')
+    expect(injectionTextFor('en')).not.toContain('reasoning')
     expect(DEFAULT_INJECTION_TEXT).toBe(EN_TEXT)
   })
-  it('注入文本字数与 README 标注一致（简体中文档 484 / 默认英文档 102 码点）', () => {
-    expect([...injectionTextFor('zh')]).toHaveLength(484)
-    expect([...injectionTextFor('en')]).toHaveLength(102)
+  it('注入文本字数与 README 标注一致（简体中文档 448 / 默认英文档 330 码点）', () => {
+    expect([...injectionTextFor('zh')]).toHaveLength(448)
+    expect([...injectionTextFor('en')]).toHaveLength(330)
   })
   it('无自定义文本时按档位生成', () => {
     expect(resolveConfig({ thinkingLanguage: 'en' }).injectionText).toBe(EN_TEXT)
