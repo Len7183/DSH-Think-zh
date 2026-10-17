@@ -13,7 +13,7 @@ export type ThinkingLanguage = (typeof THINKING_LANGUAGES)[number];
 /** 默认档（1.1.0 起）：默认英文——只注入回复跟随条款，思考语言交还模型。 */
 export declare const DEFAULT_THINKING_LANGUAGE: ThinkingLanguage;
 /**
- * 按档位生成强制指令：`zh` 为全英文思考强制，`en` 只保留回复条款（同样英文表述）。
+ * 按档位生成强制指令：`zh` 为三条中文思考强制，`en` 只保留回复条款（同样中文表述）。
  * @param language - 归一化后的档位。
  */
 export declare function injectionTextFor(language: ThinkingLanguage): string;

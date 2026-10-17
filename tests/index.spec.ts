@@ -29,7 +29,7 @@ describe('apply', () => {
     expect(spec.order).toBe(PROMPT_SECTION_ORDER)
     expect(spec.text()).toBe(DEFAULT_INJECTION_TEXT)
   })
-  it('thinkingLanguage=zh：文本切换为全英文思考强制段', () => {
+  it('thinkingLanguage=zh：文本切换为三条中文思考强制条款', () => {
     const ctx = createMockContext()
     apply(ctx, { thinkingLanguage: 'zh' })
     expect(capturedSpec(ctx).text()).toBe(injectionTextFor('zh'))
