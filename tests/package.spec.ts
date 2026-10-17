@@ -14,8 +14,8 @@ const pkg = JSON.parse(
 ) as Pkg
 
 describe('package.json 安装契约', () => {
-  it('版本为 1.1.0', () => {
-    expect(pkg.version).toBe('1.1.0')
+  it('版本为 1.1.1', () => {
+    expect(pkg.version).toBe('1.1.1')
   })
   it('不含 prepare 脚本：git 安装不触发构建，pnpm 不再要求 allowBuilds 白名单（Issues #3/#4）', () => {
     expect(pkg.scripts.prepare).toBeUndefined()

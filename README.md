@@ -33,12 +33,12 @@ DeepSeek Harness 默认的思考语言常常为英文，这不利于中文使用
 
 ## 特性
 
-- **两档思考语言**：「简体中文」注入两条强制条款（思考用简体中文 + 回复跟随提问语言）；「默认英文」（1.1.0 起的默认档）只保留回复条款，思考语言交还模型。
+- **两档思考语言**：「简体中文」注入英文强制段 + 中文重申（1.1.1 实测服从率最高的措辞）；「默认英文」（1.1.0 起的默认档）只保留回复条款，思考语言交还模型。
 - **指令位于 system prompt 最上层**：order -1000000 排在宿主全部内置 section（最小的是 harness 身份段 -1000）之前；另在 `system-prompt/assemble` 瀑布末端把该段重排到首位兜底，防止其他插件以更小 order 或瀑布改序插队（1.1.0 起）。
 - **档位在 GUI 里切换**：设置 → 通用设置 →「思考语言」，样式与相邻的「语言」行一致。
 - **改完即时生效**：档位是 volatile 配置，下一份请求即用新文本；不用重启、也不用重挂插件。
 - **两条投递通道**：静态 system prompt section（默认开）与每轮用户消息前置（`injectPerTurn`，默认关，用于对静态 section 服从弱的模型），两者相互独立。
-- **零运行时开销**：只注入一段文本，无语言检测、无缓冲、无写回；每次请求的额外成本就是那段指令本身（默认英文档 64 字符、简体中文档 90 字符）。
+- **零运行时开销**：只注入一段文本，无语言检测、无缓冲、无写回；每次请求的额外成本就是那段指令本身（默认英文档 102 字符、简体中文档 484 字符）。
 - **免构建安装**：仓库内已提交 `lib/` 构建产物，包不含任何安装期脚本，git 直装不触发 pnpm 的构建脚本拦截。
 
 ## 安装
@@ -92,25 +92,28 @@ dsh plugin --profile <profile 名> add <本目录绝对路径>
 
 **设置 → 通用设置**，在「语言」行下方即是「思考语言」两档。
 
-**简体中文**：
+**简体中文**（英文强制段 + 中文重申；1.1.1 实测该措辞对模型的约束力最强）：
 
 ```
-语言要求（强制）：
-1. 思考（reasoning）必须使用简体中文。
-2. 回复使用与用户提问相同的语言；无法判断时默认简体中文。代码、标识符、文件路径、命令等保持原文，不翻译。
+MANDATORY LANGUAGE RULE (highest priority, non-negotiable):
+1. Your internal reasoning MUST be entirely in Simplified Chinese, starting from the first token. Never think in English, and never think in English then translate.
+2. This holds even when the user writes in English, and regardless of the language of code, logs, filenames, or tool output.
+3. Reply in the user's language; keep code, identifiers, paths, commands and error text unchanged.
+思考（reasoning）必须全程使用简体中文，从第一个字起就是中文。
 ```
 
 **默认英文**（1.1.0 起的默认档）：
 
 ```
-语言要求（强制）：
-1. 回复使用与用户提问相同的语言；无法判断时默认简体中文。代码、标识符、文件路径、命令等保持原文，不翻译。
+语言要求（强制，最高优先级）：
+1. 回复使用与用户提问相同的语言，并跟随其最近一条实质提问；无法判断时默认简体中文。代码、标识符、文件路径、命令与报错原文保持原样，不翻译；工具输出与引用不改变回复语言。
 ```
 
 - **即时生效**：改完的下一份请求即用新文本；已经发出的那一轮不回溯改写。
 - **持久化**：写入当前 profile 的 `cordis.patch.yml`，即 `dsh-think-zh` 条目的 `config.thinkingLanguage`。
 - **1.0 → 1.1 默认档变更**：1.0 的默认档为「简体中文」，1.1 起为「默认英文」。已在设置页手动选过档位的用户不受影响（档位持久化在 profile 里）；从未改过设置的用户，升级后思考语言会变为不受约束，需要中文思考的话到设置页选回「简体中文」。
 - 「默认英文」档不注入思考语言条款，模型是否仍用中文思考取决于模型自身。
+- **1.1.1 变更**：仅强化注入文本——简体中文档改为「英文强制段 + 中文重申」（实测中文思考率由 0/5 提升到 5/5），默认英文档补充「跟随最近一条实质提问、工具输出不改变回复语言」；配置项、档位与持久化行为均不变。
 
 ### 验证是否生效
 
@@ -120,7 +123,7 @@ profile 由命令行启动时（web、tui 等）：
 dsh --profile <profile 名> --dump-config | grep dsh-think-zh
 ```
 
-会话内：新建会话，在轨迹视图（先在 设置 → 通用设置 打开「代码工作工具」）里看 system prompt 是否出现「语言要求（强制）：」这一段；打开设置切档位，该段文本应随之变化。
+会话内：新建会话，在轨迹视图（先在 设置 → 通用设置 打开「代码工作工具」）里看 system prompt 是否出现「语言要求（强制，最高优先级）：」这一段；打开设置切档位，该段文本应随之变化。
 
 ### 输入输出示例
 
@@ -184,7 +187,7 @@ def fibonacci(n): ...
 | 生效时机 | 每次请求组装 system prompt 时现读；section 的 `text` 以提供者形态注册，volatile 配置改完立刻反映到下一份请求 |
 | 设置行 | `client.js` 注册 `settings.general.item`（order 5，位于「语言」0 与「外观」10 之间），取值经官方 settings 服务写入 profile 条目 config |
 | 持久化 | `thinkingLanguage` 是 schemastery `.volatile()` 字段：改完即时生效、不重挂插件 |
-| 运行时开销 | 无检测、无缓冲、无写回；token 成本就是那段指令（默认英文档 64 字符、简体中文档 90 字符） |
+| 运行时开销 | 无检测、无缓冲、无写回；token 成本就是那段指令（默认英文档 102 字符、简体中文档 484 字符） |
 
 `section()` 的注册在宿主侧是 cordis effect，随插件所在 context 卸载自动回收。
 
@@ -202,7 +205,7 @@ def fibonacci(n): ...
 
 **装完没反应？** 先重启 DSH——插件在启动时组合，漏重启是最常见原因；再用上面的 `--dump-config` 确认 `dsh-think-zh` 条目确实在 profile 里。
 
-**思考还是英文？** 先确认设置里选的是「简体中文」；已经是而模型仍不服从，说明它对静态 section 服从弱，打开 `injectPerTurn`。
+**思考还是英文？** 先确认设置里选的是「简体中文」。1.1.1 的文本采用英文强制段 + 中文重申（实测服从率最高），但仍受模型自身服从性限制：静态 section 在部分模型上可能失效（Issue #5 的 Qwen 3.8-27B 即此类），此时打开 `injectPerTurn`（用户消息通道，实测稳定），并确认所选模型支持中文推理。
 
 **git 安装报 `ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED`？** 安装的是 1.0.x：那个版本带 `prepare` 构建脚本，pnpm 默认拦截 git 依赖的构建脚本。升级到 1.1.0+ 重装即可（脚本已移除）；或按报错提示把对应 key 加进 profile 的 `pnpm-workspace.yaml` 的 `allowBuilds`。
 

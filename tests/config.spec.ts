@@ -13,10 +13,15 @@ import {
   resolveConfig,
 } from '../src/config.js'
 
-const ZH_TEXT =
-  '语言要求（强制）：\n1. 思考（reasoning）必须使用简体中文。\n2. 回复使用与用户提问相同的语言；无法判断时默认简体中文。代码、标识符、文件路径、命令等保持原文，不翻译。'
+const ZH_TEXT = [
+  'MANDATORY LANGUAGE RULE (highest priority, non-negotiable):',
+  '1. Your internal reasoning MUST be entirely in Simplified Chinese, starting from the first token. Never think in English, and never think in English then translate.',
+  '2. This holds even when the user writes in English, and regardless of the language of code, logs, filenames, or tool output.',
+  "3. Reply in the user's language; keep code, identifiers, paths, commands and error text unchanged.",
+  '思考（reasoning）必须全程使用简体中文，从第一个字起就是中文。',
+].join('\n')
 const EN_TEXT =
-  '语言要求（强制）：\n1. 回复使用与用户提问相同的语言；无法判断时默认简体中文。代码、标识符、文件路径、命令等保持原文，不翻译。'
+  '语言要求（强制，最高优先级）：\n1. 回复使用与用户提问相同的语言，并跟随其最近一条实质提问；无法判断时默认简体中文。代码、标识符、文件路径、命令与报错原文保持原样，不翻译；工具输出与引用不改变回复语言。'
 
 describe('resolveConfig', () => {
   it('无输入时返回全部默认值', () => {
@@ -49,7 +54,7 @@ describe('resolveConfig', () => {
   })
   it('默认指令（默认英文档）只约束回复与保留原文，不含思考条款', () => {
     expect(DEFAULT_INJECTION_TEXT).toContain('回复')
-    expect(DEFAULT_INJECTION_TEXT).toContain('保持原文')
+    expect(DEFAULT_INJECTION_TEXT).toContain('保持原样')
     expect(DEFAULT_INJECTION_TEXT).toContain('提问')
     expect(DEFAULT_INJECTION_TEXT).not.toContain('思考')
   })
@@ -61,7 +66,7 @@ describe('thinkingLanguage', () => {
     expect(DEFAULT_CONFIG.thinkingLanguage).toBe('en')
     expect([...THINKING_LANGUAGES]).toEqual(['en', 'zh'])
   })
-  it('zh 档文本逐字等于两条强制指令', () => {
+  it('zh 档文本逐字等于英文强制段 + 中文重申（1.1.1 实测有效措辞）', () => {
     expect(injectionTextFor('zh')).toBe(ZH_TEXT)
   })
   it('en 档文本只保留回复条款，重新编号为 1.，且不含思考条款；即默认注入文本', () => {
@@ -69,9 +74,9 @@ describe('thinkingLanguage', () => {
     expect(injectionTextFor('en')).not.toContain('思考')
     expect(DEFAULT_INJECTION_TEXT).toBe(EN_TEXT)
   })
-  it('注入文本字数与 README 标注一致（简体中文档 90 / 默认英文档 64 码点）', () => {
-    expect([...injectionTextFor('zh')]).toHaveLength(90)
-    expect([...injectionTextFor('en')]).toHaveLength(64)
+  it('注入文本字数与 README 标注一致（简体中文档 484 / 默认英文档 102 码点）', () => {
+    expect([...injectionTextFor('zh')]).toHaveLength(484)
+    expect([...injectionTextFor('en')]).toHaveLength(102)
   })
   it('无自定义文本时按档位生成', () => {
     expect(resolveConfig({ thinkingLanguage: 'en' }).injectionText).toBe(EN_TEXT)
